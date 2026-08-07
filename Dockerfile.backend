@@ -10,8 +10,8 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-# Use Aliyun mirror for Debian (China network)
-RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+# Use Aliyun mirror for Debian packages (China network)
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -20,25 +20,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Use Aliyun pip mirror for faster downloads
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
 # Copy project files
 COPY pyproject.toml README.md LICENSE ./
 COPY backend/ backend/
 
-# Install the package with service dependencies (use Aliyun mirror)
-RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ -e ".[service,storage-sql,context]"
+# Install the package with service dependencies
+RUN pip install --no-cache-dir -e ".[service,storage-sql,context]"
 
 # ===== Stage 2: Runtime =====
 FROM python:3.12-slim AS runtime
 
 WORKDIR /app
 
-# Use Aliyun mirror for Debian (China network)
-RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+# Use Aliyun mirror for Debian packages (China network)
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
 
-# Install runtime system dependencies
+# Install runtime system dependencies (tzdata is required for zoneinfo/APScheduler)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed packages from builder
@@ -63,7 +67,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     SKPL_DATA_DIR=/app/data \
     SKPL_HOST=0.0.0.0 \
-    SKPL_PORT=8000
+    SKPL_PORT=8000 \
+    TZ=Asia/Shanghai
 
 EXPOSE 8000
 
