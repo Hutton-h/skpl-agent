@@ -10,6 +10,9 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
+# Use Aliyun mirror for Debian (China network)
+RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -21,13 +24,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml README.md LICENSE ./
 COPY backend/ backend/
 
-# Install the package with service dependencies
-RUN pip install --no-cache-dir -e ".[service,storage-sql,context]"
+# Install the package with service dependencies (use Aliyun mirror)
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ -e ".[service,storage-sql,context]"
 
 # ===== Stage 2: Runtime =====
 FROM python:3.12-slim AS runtime
 
 WORKDIR /app
+
+# Use Aliyun mirror for Debian (China network)
+RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
 
 # Install runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
