@@ -20,9 +20,12 @@ RUN npm install -g pnpm@11.17.0
 COPY frontend/package.json ./
 COPY frontend/pnpm-lock.yaml* ./
 
-# Use pnpm mirror for China and increase timeout
+# Use pnpm mirror for China, allow build scripts, increase timeout
 RUN pnpm config set registry https://registry.npmmirror.com && \
     pnpm config set fetch-timeout 120000 && \
+    echo 'onlyBuiltDependencies[]=@swc/core' >> .npmrc && \
+    echo 'onlyBuiltDependencies[]=esbuild' >> .npmrc && \
+    echo 'onlyBuiltDependencies[]=unrs-resolver' >> .npmrc && \
     pnpm install --no-frozen-lockfile
 
 # Copy source code
