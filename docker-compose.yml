@@ -22,6 +22,7 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
@@ -60,6 +61,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+      network: host
     container_name: skpl-backend
     restart: unless-stopped
     depends_on:
@@ -91,8 +93,8 @@ services:
       SKPL_GLOBAL_EMBEDDING_API_KEY: ${SKPL_GLOBAL_EMBEDDING_API_KEY}
       SKPL_GLOBAL_EMBEDDING_BASE_URL: ${SKPL_GLOBAL_EMBEDDING_BASE_URL:-https://api.voyageai.com/v1}
       SKPL_GLOBAL_EMBEDDING_DIMENSIONS: "1024"
-      # CORS
-      SKPL_CORE_CORS_ORIGINS: ${SKPL_CORS_ORIGINS:-http://localhost:5173,http://localhost:4173}
+      # CORS - MUST be JSON array format for pydantic-settings
+      SKPL_CORE_CORS_ORIGINS: ${SKPL_CORS_ORIGINS:-["http://localhost:5173","http://localhost:4173"]}
     volumes:
       - backend_data:/app/data
       - backend_logs:/app/logs
@@ -110,15 +112,16 @@ services:
   # ── SKPL Agent 前端 ────────────────────────────────────
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./frontend
+      dockerfile: Dockerfile
+      network: host
     container_name: skpl-frontend
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
     environment:
-      VITE_API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
+      VITE_API_BASE_URL: ${SKPL_API_BASE_URL:-http://localhost:8000}
     ports:
       - "127.0.0.1:4173:4173"
     healthcheck:
