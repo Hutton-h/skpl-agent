@@ -136,7 +136,7 @@ rag = [
 ]
 
 # ===== Long-term memory (from AgentScope) =====
-memory-mem0 = ["mem0ai>=2.0.0"]
+memory-mem0 = ["mem0ai>=2.0.15"]
 memory-reme = ["reme-ai>=0.4.0.6"]
 memory = [
     "skpl-agent[memory-mem0]",
