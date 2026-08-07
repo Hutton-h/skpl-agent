@@ -23,9 +23,7 @@ COPY frontend/pnpm-lock.yaml* ./
 # Use pnpm mirror for China, allow build scripts, increase timeout
 RUN pnpm config set registry https://registry.npmmirror.com && \
     pnpm config set fetch-timeout 120000 && \
-    echo 'onlyBuiltDependencies[]=@swc/core' >> .npmrc && \
-    echo 'onlyBuiltDependencies[]=esbuild' >> .npmrc && \
-    echo 'onlyBuiltDependencies[]=unrs-resolver' >> .npmrc && \
+    printf 'onlyBuiltDependencies:\n  - "@swc/core"\n  - esbuild\n  - unrs-resolver\n' > pnpm-workspace.yaml && \
     pnpm install --no-frozen-lockfile
 
 # Copy source code
