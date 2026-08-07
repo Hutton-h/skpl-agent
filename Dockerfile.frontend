@@ -16,13 +16,12 @@ RUN npm config set registry https://registry.npmmirror.com
 # Install pnpm 9 (NOT 11 — pnpm 11+ ignores onlyBuiltDependencies in package.json)
 RUN npm install -g pnpm@9.15.0
 
-# Copy package files
+# Copy package files (no lockfile — pnpm 9 can't read pnpm 11 lockfiles)
 COPY frontend/package.json ./
-COPY frontend/pnpm-lock.yaml* ./
 
 # Configure pnpm for China network + build scripts
 RUN printf 'registry=https://registry.npmmirror.com\nfetch-timeout=120000\nshamefully-hoist=true\n' > .npmrc && \
-    pnpm install --no-frozen-lockfile
+    pnpm install
 
 # Copy source code
 COPY frontend/ ./
