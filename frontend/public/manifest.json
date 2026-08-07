@@ -1,0 +1,30 @@
+{
+  "name": "SKPL Agent",
+  "short_name": "SKPL",
+  "description": "Super Knowledge & Process Learning Agent Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#F6D365",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/skpl-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "developer tools"],
+  "lang": "zh-CN",
+  "display_override": ["window-controls-overlay"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "scope": "/",
+  "prefer_related_applications": false
+}

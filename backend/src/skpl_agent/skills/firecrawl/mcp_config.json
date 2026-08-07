@@ -1,0 +1,212 @@
+{
+  "mcpServers": {
+    "firecrawl": {
+      "description": "Firecrawl MCP server — web scraping, crawling, search, site mapping, structured extraction, and document parsing",
+      "command": "python",
+      "args": ["-m", "skpl_agent.skill._firecrawl"],
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}",
+        "FIRECRAWL_API_ENDPOINT": "https://api.firecrawl.dev",
+        "FIRECRAWL_TIMEOUT_SECONDS": "300",
+        "FIRECRAWL_MAX_CONCURRENT_CRAWLS": "3",
+        "FIRECRAWL_RATE_LIMIT_PER_MINUTE": "10",
+        "FIRECRAWL_DEFAULT_MAX_PAGES": "50",
+        "FIRECRAWL_RESPECT_ROBOTS_TXT": "true",
+        "FIRECRAWL_USER_AGENT": "SKPL-Agent-Firecrawl/0.1"
+      },
+      "tools": [
+        {
+          "name": "scrape",
+          "description": "Scrape a single URL and extract content as markdown, HTML, and text. Returns title, description, metadata, links, and images.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "The URL to scrape"
+              },
+              "formats": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["markdown", "html", "text"]
+                },
+                "description": "Output formats to include",
+                "default": ["markdown"]
+              },
+              "only_main_content": {
+                "type": "boolean",
+                "description": "Extract only the main content, excluding boilerplate",
+                "default": true
+              },
+              "wait_for": {
+                "type": "integer",
+                "description": "Wait time in milliseconds before scraping (for JS-rendered pages)",
+                "default": 0
+              }
+            },
+            "required": ["url"]
+          }
+        },
+        {
+          "name": "crawl",
+          "description": "Crawl a website recursively, following internal links up to a specified depth. Returns all scraped pages with content.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "The starting URL for the crawl"
+              },
+              "max_depth": {
+                "type": "integer",
+                "description": "Maximum crawl depth",
+                "default": 2,
+                "minimum": 1,
+                "maximum": 10
+              },
+              "max_pages": {
+                "type": "integer",
+                "description": "Maximum number of pages to crawl",
+                "default": 50,
+                "minimum": 1,
+                "maximum": 500
+              },
+              "include_patterns": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "URL patterns to include (regex)"
+              },
+              "exclude_patterns": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "URL patterns to exclude (regex)"
+              }
+            },
+            "required": ["url"]
+          }
+        },
+        {
+          "name": "search",
+          "description": "Search the web using integrated search engines. Returns ranked results with titles, URLs, and snippets.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Search query string"
+              },
+              "engine": {
+                "type": "string",
+                "enum": ["google", "bing"],
+                "description": "Search engine to use",
+                "default": "google"
+              },
+              "num_results": {
+                "type": "integer",
+                "description": "Maximum number of results to return",
+                "default": 10,
+                "minimum": 1,
+                "maximum": 100
+              },
+              "language": {
+                "type": "string",
+                "description": "Language code for results (e.g., 'en', 'zh-CN')",
+                "default": "en"
+              },
+              "country": {
+                "type": "string",
+                "description": "Country code for localized results (e.g., 'us', 'cn')",
+                "default": ""
+              }
+            },
+            "required": ["query"]
+          }
+        },
+        {
+          "name": "map",
+          "description": "Discover all URLs on a website via sitemap.xml parsing or homepage link crawling. Returns a structured site map.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "The website URL to map"
+              },
+              "max_pages": {
+                "type": "integer",
+                "description": "Maximum number of URLs to discover",
+                "default": 500,
+                "minimum": 1,
+                "maximum": 5000
+              },
+              "include_subdomains": {
+                "type": "boolean",
+                "description": "Whether to include subdomain URLs",
+                "default": false
+              }
+            },
+            "required": ["url"]
+          }
+        },
+        {
+          "name": "extract",
+          "description": "Extract structured data from a web page using CSS selectors or LLM-powered extraction. Returns structured JSON matching the provided schema.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "The URL to extract data from"
+              },
+              "schema": {
+                "type": "object",
+                "description": "Extraction schema. Keys are field names, values are CSS selectors (selector mode) or type descriptions (LLM mode)."
+              },
+              "use_llm": {
+                "type": "boolean",
+                "description": "Whether to use LLM for extraction (requires API key)",
+                "default": false
+              },
+              "llm_prompt": {
+                "type": "string",
+                "description": "Additional prompt for LLM extraction",
+                "default": ""
+              }
+            },
+            "required": ["url", "schema"]
+          }
+        },
+        {
+          "name": "parse",
+          "description": "Parse content into structured formats. Supports HTML, plain text, Markdown, and PDF. Returns markdown, text, JSON-LD, tables, and content statistics.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "Raw content to parse"
+              },
+              "content_type": {
+                "type": "string",
+                "enum": ["html", "text", "markdown", "pdf"],
+                "description": "Type of content being parsed",
+                "default": "html"
+              },
+              "url": {
+                "type": "string",
+                "description": "Source URL (for relative link resolution)",
+                "default": ""
+              }
+            },
+            "required": ["content"]
+          }
+        }
+      ]
+    }
+  }
+}

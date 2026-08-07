@@ -1,0 +1,133 @@
+{
+  "name": "skpl-agent",
+  "displayName": "SKPL Agent",
+  "description": "AI-powered coding assistant embedded in VS Code. Chat with SKPL Agent, get inline completions, and execute skills from the sidebar.",
+  "version": "0.2.0",
+  "publisher": "skpl",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:skpl.chatView",
+    "onCommand:skpl.explainCode",
+    "onCommand:skpl.reviewCode",
+    "onCommand:skpl.debugError",
+    "onCommand:skpl.generateTests",
+    "onCommand:skpl.refactorCode"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "skpl",
+          "title": "SKPL Agent",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "skpl": [
+        {
+          "id": "skpl.chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "skpl.openChat",
+        "title": "SKPL Agent: Open Chat"
+      },
+      {
+        "command": "skpl.askSelection",
+        "title": "SKPL Agent: Ask About Selection"
+      },
+      {
+        "command": "skpl.explainCode",
+        "title": "SKPL Agent: Explain Code"
+      },
+      {
+        "command": "skpl.reviewCode",
+        "title": "SKPL Agent: Review Code"
+      },
+      {
+        "command": "skpl.debugError",
+        "title": "SKPL Agent: Debug Workspace Errors"
+      },
+      {
+        "command": "skpl.generateTests",
+        "title": "SKPL Agent: Generate Tests"
+      },
+      {
+        "command": "skpl.refactorCode",
+        "title": "SKPL Agent: Refactor Code"
+      }
+    ],
+    "configuration": {
+      "title": "SKPL Agent",
+      "properties": {
+        "skpl.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:5173",
+          "description": "URL of the SKPL Agent web frontend."
+        },
+        "skpl.backendUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000",
+          "description": "URL of the SKPL Agent backend API (for inline completions and health checks)."
+        },
+        "skpl.enableInlineCompletion": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI-powered inline code completions via the SKPL backend."
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "skpl.askSelection",
+          "when": "editorHasSelection",
+          "group": "9_skpl@1"
+        },
+        {
+          "command": "skpl.explainCode",
+          "group": "9_skpl@2"
+        },
+        {
+          "command": "skpl.reviewCode",
+          "group": "9_skpl@3"
+        },
+        {
+          "command": "skpl.generateTests",
+          "group": "9_skpl@4"
+        },
+        {
+          "command": "skpl.refactorCode",
+          "group": "9_skpl@5"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "skpl.debugError",
+          "when": "!editorHasSelection"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --platform=node --format=cjs",
+    "watch": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --platform=node --format=cjs --watch",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,1177 @@
+{
+	"common": {
+		"add": "Add",
+		"agent": "Agent",
+		"buglog": "Bug Log",
+		"cancel": "Cancel",
+		"chat": "Chat",
+		"close": "Close",
+		"codeGen": "Code Gen",
+		"confirm": "Confirm",
+		"context": "Context",
+		"create": "Create",
+		"creating": "Creating…",
+		"credential": "Credentials",
+		"dashboard": "Dashboard",
+		"date": "Date",
+		"delete": "Delete",
+		"deleting": "Deleting…",
+		"desktop": "Desktop",
+		"disabled": "Disabled",
+		"edit": "Edit",
+		"error": "Something went wrong",
+		"firecrawl": "Firecrawl",
+		"information": "Information",
+		"interrupted": "Interrupted",
+		"knowledge": "Knowledge Bases",
+		"loading": "Loading...",
+		"sessions": "Sessions",
+		"model": "Model",
+		"name": "Name",
+		"no": "No",
+		"noData": "No data",
+		"readOnly": "Read-only",
+		"readOnlyTooltip": "Shared with you as read-only; editing and deletion are disabled.",
+		"refresh": "Refresh",
+		"completed": "Completed",
+		"failed": "Failed",
+		"running": "Running",
+		"save": "Save",
+		"saving": "Saving…",
+		"schedule": "Schedule",
+		"selectAgent": "Select an agent",
+		"settings": "Settings",
+		"switchToZh": "切换为中文",
+		"switchToEn": "Switch to English",
+		"success": "Success",
+		"team": "Team",
+		"leader": "Leader",
+		"worker": "Worker",
+		"time": "Time",
+		"webIntelligence": "Web Intelligence",
+		"yes": "Yes",
+		"deleteTitle": "Delete {{entity}} \"{{name}}\"?",
+		"deleteDescription": "This action cannot be undone.",
+		"actions": "Actions",
+		"whatsapp": "WhatsApp"
+	},
+	"error": {
+		"description": "The page hit an unexpected error. You can retry or go back home.",
+		"retry": "Retry",
+		"home": "Back to home"
+	},
+	"tool": {
+		"callGeneric": "Call tool",
+		"read": {
+			"name": "Read",
+			"fileCount_one": "{{count}} file",
+			"fileCount_other": "{{count}} files",
+			"lineCount_one": "Read {{formatted}} line",
+			"lineCount_other": "Read {{formatted}} lines"
+		},
+		"glob": {
+			"name": "Glob"
+		},
+		"taskCreate": {
+			"name": "TaskCreate"
+		},
+		"grep": {
+			"name": "Grep"
+		},
+		"summary": {
+			"separator": ", ",
+			"bash_one": "ran {{count}} shell command",
+			"bash_other": "ran {{count}} shell commands",
+			"read_one": "read {{count}} file",
+			"read_other": "read {{count}} files",
+			"edit_one": "edited {{count}} file",
+			"edit_other": "edited {{count}} files",
+			"search_one": "searched {{count}} pattern",
+			"search_other": "searched {{count}} patterns",
+			"todo_one": "updated todos {{count}} item",
+			"todo_other": "updated todos {{count}} items",
+			"mcp_one": "called {{count}} MCP tool",
+			"mcp_other": "called {{count}} MCP tools",
+			"fallback_one": "called {{count}} tool",
+			"fallback_other": "called {{count}} tools"
+		}
+	},
+	"textInput": {
+		"toComplete": "to complete",
+		"attach": "Attach file",
+		"attachNotSupported": "This model does not support file attachments",
+		"send": "Send",
+		"stop": "Stop generating",
+		"stopping": "Stopping ...",
+		"screenshot": "Screenshot"
+	},
+	"confirmCard": {
+		"toConfirm": "to confirm",
+		"yesWithRule": "Yes, and allow {{toolName}} to execute {{ruleContent}} for this session"
+	},
+	"messageBubble": {
+		"thinking": "Thinking",
+		"audioGenerating": "Generating audio…",
+		"playAudio": "Play audio",
+		"pauseAudio": "Pause audio",
+		"running": "Running...",
+		"uploadedImage": "Uploaded image",
+		"hintSource": {
+			"tool_output": "Tool Output",
+			"team_message": "Team Message",
+			"schedule": "Schedule"
+		},
+		"error": {
+			"title": "Reply failed",
+			"authentication": "Authentication failed — check the model's API key or credential.",
+			"permission": "Request not allowed — the credential lacks permission for this model or endpoint.",
+			"rate_limit": "Rate limit or quota exceeded — please try again later.",
+			"invalid_request": "The request to the model was rejected as invalid.",
+			"upstream": "The upstream model service returned an error.",
+			"connection": "Could not reach the model service — network error or timeout.",
+			"internal": "An unexpected internal error occurred.",
+			"unknown": "The reply failed with an unknown error."
+		}
+	},
+	"chat": {
+		"inputPlaceholder": "Type a message...",
+		"placeholder": "Type a message...",
+		"send": "Send",
+		"scrollToBottom": "Scroll to bottom",
+		"confirmToolCall": "Allow this action?",
+		"subagentConfirmTitle": "{{name}} requests confirmation",
+		"newSession": "New Session",
+		"noSessions": "No sessions yet",
+		"greeting": "Where should we start?",
+		"agent": {
+			"selectPlaceholder": "Select an agent",
+			"emptyTitle": "No agents",
+			"emptyDescription": "Create an agent to get started.",
+			"groupYours": "Yours",
+			"groupShared": "Shared with you"
+		},
+		"session": {
+			"label": "Session",
+			"emptyTitle": "No sessions",
+			"emptyNoAgent": "Select an agent first.",
+			"emptyHasAgent": "Create a session to start chatting."
+		}
+	},
+	"dialog-agent-create": {
+		"title": "Create agent",
+		"description": "Define a new agent's identity and behaviour.",
+		"trigger": "Create agent"
+	},
+	"agent-form": {
+		"identity": {
+			"legend": "Agent Identity",
+			"description": "Name and instructions that define this agent's behaviour.",
+			"name": {
+				"label": "Name",
+				"placeholder": "My agent"
+			},
+			"system-prompt": {
+				"label": "System prompt"
+			}
+		},
+		"context-config": {
+			"legend": "Context Config",
+			"description": "Controls how the context window is managed and compressed.",
+			"trigger-ratio": {
+				"label": "Trigger ratio"
+			},
+			"reserve-ratio": {
+				"label": "Reserve ratio"
+			},
+			"tool-result-limit": {
+				"label": "Tool result limit"
+			},
+			"compression-prompt": {
+				"label": "Compression prompt"
+			},
+			"summary-template": {
+				"label": "Summary template"
+			}
+		},
+		"react-config": {
+			"legend": "ReAct Config",
+			"description": "Controls the reasoning and action loop behaviour.",
+			"max-iters": {
+				"label": "Max iterations"
+			},
+			"stop-on-reject": {
+				"label": "Stop on reject"
+			}
+		},
+		"invite-config": {
+			"legend": "Invite Config",
+			"description": "Controls whether other agents can borrow this one via AgentInvite.",
+			"invitable": {
+				"label": "Invitable"
+			},
+			"invite-description": {
+				"label": "Invite description",
+				"placeholder": "Briefly describe this agent's expertise; required when invitable is on."
+			}
+		}
+	},
+	"dialog-agent-edit": {
+		"title": "Edit agent",
+		"description": "Update this agent's configuration."
+	},
+	"dialog-agent-delete": {
+		"entity": "agent",
+		"confirm": "Delete"
+	},
+	"dialog-session-delete": {
+		"entity": "session",
+		"confirm": "Delete"
+	},
+	"dialog-session-rename": {
+		"title": "Rename session",
+		"description": "Give this session a new name.",
+		"label": "Name",
+		"placeholder": "Session name"
+	},
+	"session-menu": {
+		"rename": "Rename",
+		"delete": "Delete"
+	},
+	"dialog-credential-create": {
+		"title": "Add credential",
+		"description": "Add credentials for a model provider.",
+		"selectType": "Provider",
+		"selectTypePlaceholder": "Select a provider"
+	},
+	"dialog-credential-edit": {
+		"title": "Edit Credential",
+		"description": "Update the saved credential for this provider."
+	},
+	"dialog-knowledge-base-create": {
+		"title": "Create knowledge base",
+		"description": "Create a new knowledge base using an embedding model.",
+		"name": {
+			"label": "Name",
+			"placeholder": "My knowledge base"
+		},
+		"descriptionField": {
+			"label": "Description",
+			"placeholder": "Describe what this knowledge base is for."
+		},
+		"embeddingModel": {
+			"label": "Embedding model"
+		},
+		"dimension": {
+			"label": "Dimension"
+		},
+		"policy": {
+			"lockedTitle": "Dimension is locked to {{dimension}}d",
+			"lockedDescription": "This server already pins all knowledge bases to {{dimension}}-dim embeddings. Only compatible models are listed below.",
+			"noCompatibleTitle": "No compatible embedding models",
+			"noCompatibleAny": "None of your credentials expose an embedding model. Add a credential first.",
+			"noCompatibleLocked": "None of your credentials expose a model that can produce {{dimension}}-dim embeddings."
+		},
+		"errors": {
+			"nameRequired": "Please give the knowledge base a name.",
+			"embeddingRequired": "Please pick an embedding model.",
+			"dimensionRequired": "Please pick a dimension."
+		}
+	},
+	"dialog-knowledge-base-edit": {
+		"title": "Edit knowledge base",
+		"description": "Update the knowledge base name and description.",
+		"name": {
+			"label": "Name",
+			"placeholder": "My knowledge base"
+		},
+		"descriptionField": {
+			"label": "Description",
+			"placeholder": "Describe what this knowledge base is for."
+		},
+		"embeddingModel": {
+			"label": "Embedding model"
+		},
+		"errors": {
+			"nameRequired": "Please give the knowledge base a name."
+		}
+	},
+	"dialog-knowledge-base-delete": {
+		"title": "Delete knowledge base",
+		"description": "This will permanently delete the knowledge base \"{{name}}\" and all of its indexed documents. This action cannot be undone."
+	},
+	"credential": {
+		"noProviders": "No providers available",
+		"noConfigs": "No configurations",
+		"selectHint": "No credential selected",
+		"selectHintDescription": "Select a credential from the sidebar to view its details.",
+		"availableModels": "Available Models",
+		"noModels": "No models available",
+		"noModelsDescription": "This provider returned no models.",
+		"deleteEntity": "credential",
+		"subtitle": "Model API credential configuration",
+		"configured": "Configured",
+		"addProvider": "Add credential",
+		"reasoning": "Reasoning",
+		"maxContext": "Max. Context",
+		"maxOutput": "Max. Output",
+		"inputTypes": "Input",
+		"outputTypes": "Output",
+		"availableTTSModels": "TTS Models"
+	},
+	"knowledge": {
+		"subtitle": "Manage knowledge bases used by your agents",
+		"selectHint": "No knowledge base selected",
+		"selectHintDescription": "Select a knowledge base from the sidebar to view its details.",
+		"deleteEntity": "knowledge base",
+		"list": {
+			"label": "Knowledge bases",
+			"emptyTitle": "No knowledge bases",
+			"emptyDescription": "Create a knowledge base to start indexing documents.",
+			"createButton": "Create knowledge base"
+		},
+		"document": {
+			"label": "Documents",
+			"emptyTitle": "No documents",
+			"emptyDescription": "Upload a document to index it into this knowledge base.",
+			"uploadButton": "Upload document",
+			"uploadButtonShort": "Upload",
+			"countLabel": "Documents ({{count}})",
+			"size": "Size",
+			"chunks": "Chunks",
+			"chunkCount_one": "{{count}} chunk",
+			"chunkCount_other": "{{count}} chunks",
+			"uploadedAt": "Uploaded {{when}}",
+			"deleteEntity": "document",
+			"deleteConfirmTitle": "Delete document",
+			"deleteConfirmDescription": "Delete \"{{name}}\"? This removes the document and every indexed chunk. This action cannot be undone.",
+			"deleteError": "Could not delete document.",
+			"dropHint": "Drop files here to upload",
+			"dropHintIdle": "or drop files here",
+			"invalidFile": "\"{{name}}\" could not be added.",
+			"unsupportedExtension": "\"{{name}}\" was skipped — file type not supported.",
+			"status": {
+				"queued": "Queued",
+				"uploading": "Uploading",
+				"pending": "Awaiting worker",
+				"parsing": "Parsing",
+				"chunking": "Chunking",
+				"indexing": "Indexing",
+				"ready": "Ready",
+				"error": "Error",
+				"cancelled": "Cancelled"
+			},
+			"actions": {
+				"cancel": "Cancel",
+				"retry": "Retry",
+				"dismiss": "Dismiss",
+				"remove": "Remove",
+				"clearFinished": "Clear finished"
+			}
+		},
+		"test": {
+			"button": "Test",
+			"title": "Test retrieval",
+			"description": "Probe \"{{name}}\" with an ad-hoc query.",
+			"queryLabel": "Query",
+			"queryPlaceholder": "Type a natural-language question…",
+			"topKLabel": "Top K",
+			"searchButton": "Search",
+			"score": "score",
+			"chunkPosition": "Chunk {{index}} of {{total}}",
+			"emptyTitle": "No matches",
+			"emptyDescription": "No chunks scored above the threshold for this query."
+		}
+	},
+	"llm-select": {
+		"placeholder": "Select a model",
+		"fallbackPlaceholder": "Fallback model",
+		"loading": "Loading…",
+		"empty": {
+			"title": "No models available",
+			"description": "Add a credential to get started.",
+			"addButton": "Add credential"
+		},
+		"addCredential": "Add Credential",
+		"clear": "Clear selection",
+		"noFallback": "No fallback"
+	},
+	"embedding-select": {
+		"placeholder": "Select an embedding model",
+		"loading": "Loading…",
+		"empty": {
+			"title": "No embedding models available",
+			"description": "Add a credential that supports embedding to get started."
+		},
+		"addCredential": "Add Credential",
+		"clear": "Clear selection"
+	},
+	"dimension-select": {
+		"placeholder": "Select a dimension",
+		"pickModelFirst": "Pick a model first"
+	},
+	"permission-mode": {
+		"placeholder": "Select permission mode",
+		"trigger-tooltip": "Permission Mode",
+		"label": "Permission Mode",
+		"default-tooltip": "Default mode: all operations require explicit permission (most secure)",
+		"accept_edits-tooltip": "Auto-allow file reads/writes in working directories and filesystem commands; other operations follow normal rules",
+		"explore-tooltip": "Read-only mode: allow read/grep/glob tools, deny write/edit/bash modification tools",
+		"bypass-tooltip": "All operations automatically allowed without any permission checks (use in trusted/sandbox environments)",
+		"dont_ask-tooltip": "Convert all ASK decisions to DENY; suitable for scheduled tasks or background execution when user is unavailable"
+	},
+	"dialog-mcp-create": {
+		"title": "Add MCP Servers",
+		"description": "Add new MCP server(s) by configuration.",
+		"configLabel": "MCP Configuration",
+		"keepAlive": "Keep Alive",
+		"keepAliveDesc": "Maintain state across interactions. Enable for browser-use or other long-running MCPs.",
+		"adding": "Adding…",
+		"added": "Added",
+		"parseError": "Invalid JSON configuration: {{message}}",
+		"missingMcpServers": "Configuration must contain a \"mcpServers\" object.",
+		"emptyMcpServers": "No MCP servers found in configuration."
+	},
+	"dialog-mcp-delete": {
+		"entity": "MCP server",
+		"skillEntity": "skill",
+		"skillDescription": "Are you sure you want to remove this skill from the workspace?"
+	},
+	"dialog-skill-add": {
+		"title": "Add skill",
+		"description": "Enter the path to a skill directory to add it to the workspace.",
+		"pathLabel": "Skill path",
+		"pathPlaceholder": "/path/to/skill"
+	},
+	"schedule": {
+		"calendar": "Calendar",
+		"createSchedule": {
+			"description": "Set up a recurring or one-time scheduled task for an agent.",
+			"descriptionLabel": "Description",
+			"descriptionPlaceholder": "Describe what this schedule should do...",
+			"namePlaceholder": "e.g. Daily Report",
+			"title": "Create Schedule"
+		},
+		"deleteSchedule": {
+			"entity": "schedule",
+			"successToast": "Schedule deleted successfully."
+		},
+		"endAt": "End Date",
+		"end_at": "End At",
+		"executionHistory": "Execution History",
+		"freqDaily": "Daily",
+		"freqMonthly": "Monthly",
+		"freqOnce": "Once",
+		"freqWeekly": "Weekly",
+		"frequency": "Frequency",
+		"friday": "Fri",
+		"list": "List",
+		"monday": "Mon",
+		"more": "more",
+		"nextMonth": "Next Month",
+		"nextYear": "Next Year",
+		"noExecutions": "No executions yet",
+		"noExecutionsDescription": "This schedule has not been executed yet.",
+		"noSchedules": "No schedules",
+		"noSchedulesDescription": "Create a schedule to automate agent tasks.",
+		"pickDate": "Pick a date",
+		"permissionMode": "Permission Mode",
+		"timezone": "Timezone",
+		"searchTimezone": "Search timezone...",
+		"triggerTime": "Trigger Time",
+		"createdAt": "Created At",
+		"dayOfMonthSuffix": "",
+		"stateful": "Stateful",
+		"statefulDesc": "Reuse one session across all fires to accumulate context. Disabled: every fire creates a fresh session.",
+		"previousMonth": "Previous Month",
+		"previousYear": "Previous Year",
+		"saturday": "Sat",
+		"startAt": "Start At",
+		"sunday": "Sun",
+		"thursday": "Thu",
+		"today": "Today",
+		"tuesday": "Tue",
+		"wednesday": "Wed"
+	},
+	"model-parameters": {
+		"title": "Model Parameters",
+		"description": "Adjust inference parameters for the selected model.",
+		"empty": "No configurable parameters.",
+		"fallbackLabel": "Fallback model",
+		"fallbackLabelWithModel": "Fallback model ({{model}})",
+		"parametersLabel": "Parameters",
+		"ttsLabel": "TTS",
+		"ttsEmpty": "No TTS models available.",
+		"ttsParameters": "Parameters",
+		"ttsParametersDescription": "Adjust parameters for the selected TTS model.",
+		"noTts": "No TTS"
+	},
+	"setup": {
+		"title": "Connect to Service",
+		"description": "Enter your server URL and username to get started.",
+		"serverUrl": "Server URL",
+		"serverUrlPlaceholder": "https://...",
+		"username": "Username",
+		"usernamePlaceholder": "Your username",
+		"submit": "Get Started",
+		"hint": "This is a frontend-only application, and all data are served from the Server URL above. The username is used solely for server-side authentication."
+	},
+	"task-panel": {
+		"heading": "Tasks",
+		"noTasks": "No tasks yet.",
+		"pending": "Pending",
+		"inProgress": "In Progress",
+		"completed": "Completed",
+		"blockedBy": "blocked by"
+	},
+	"panel": {
+		"plan": {
+			"title": "Plan",
+			"completed": "Completed: {{count}}",
+			"total": "Total: {{count}}",
+			"emptyTitle": "No tasks yet",
+			"emptyDescription": "Tasks the agent plans will show up here."
+		},
+		"mcp": {
+			"title": "MCP",
+			"description": "The MCP servers equipped in the workspace.",
+			"searchPlaceholder": "Search MCP in the workspace",
+			"add": "Add MCP",
+			"tools": "{{count}} tools",
+			"emptyTitle": "No MCP servers",
+			"emptyDescription": "Add an MCP server to equip the workspace with tools."
+		},
+		"skill": {
+			"title": "Skills",
+			"description": "The skills equipped in the workspace.",
+			"searchPlaceholder": "Search skills in the workspace",
+			"add": "Add Skill",
+			"emptyTitle": "No skills",
+			"emptyDescription": "Add a skill to equip the workspace.",
+			"tabEquipped": "Equipped",
+			"tabLibrary": "Library",
+			"library": {
+				"description": "Browse and install skills from the skill library.",
+				"install": "Install",
+				"uninstall": "Uninstall",
+				"installed": "Installed",
+				"emptyTitle": "Library is empty",
+				"emptyDescription": "No skills available to install right now.",
+				"noSessionDescription": "Select a session to browse the skill library.",
+				"errorTitle": "Failed to load the skill library",
+				"categories": {
+					"research": "Research",
+					"seo": "SEO/Traffic",
+					"sales": "Sales",
+					"content": "Content",
+					"data": "Data Analysis",
+					"ops": "Operations",
+					"coding": "Coding",
+					"automation": "Automation",
+					"productivity": "Productivity"
+				}
+			}
+		},
+		"knowledge": {
+			"title": "Knowledge Bases",
+			"description": "Knowledge bases the agent can retrieve from.",
+			"searchPlaceholder": "Search knowledge bases",
+			"emptyTitle": "No knowledge bases",
+			"emptyDescription": "Create one on the Knowledge Bases page first.",
+			"parametersTitle": "Retrieval settings",
+			"parametersDescription": "Knowledge base retrieval settings.",
+			"selectedCount": "{{count}} attached"
+		},
+		"permission": {
+			"title": "Permissions",
+			"description": "The permissions applied in this session.",
+			"mode": "Mode: {{mode}}",
+			"workingDirectories": "Working Directories",
+			"noWorkingDirectories": "No working directories.",
+			"allow": "Allow",
+			"deny": "Deny",
+			"ask": "Ask",
+			"anyInvocation": "any invocation",
+			"emptyTitle": "No rules configured",
+			"emptyDescription": "Allow / deny / ask rules will appear here as they are added."
+		},
+		"search": {
+			"emptyTitle": "No results",
+			"emptyDescription": "Nothing matches “{{query}}”."
+		},
+		"loading": "Loading…",
+		"notification": {
+			"tabChannels": "Notification Channels",
+			"tabEvents": "Event Subscriptions",
+			"channelDescription": "Configure channels to receive notifications",
+			"channel": {
+				"email": "Email",
+				"whatsapp": "WhatsApp",
+				"in_app": "In-app Notification"
+			},
+			"verified": "Verified",
+			"unverified": "Unverified",
+			"target": "Recipient Address",
+			"eventDescription": "Select event types to receive notifications for"
+		}
+	},
+	"visual": {
+		"type": {
+			"chart": "Chart",
+			"table": "Table",
+			"comparison": "Comparison",
+			"dashboard": "Dashboard",
+			"timeline": "Timeline",
+			"action": "Action"
+		}
+	},
+	"plan-card": {
+		"title": "Plan",
+		"awaitingConfirmation": "Awaiting confirmation",
+		"planned": "Planned"
+	},
+	"team-sidebar": {
+		"membersHeading": "Members",
+		"noMembers": "No members yet — ask the leader to spawn one with AgentCreate.",
+		"running": "Running",
+		"idle": "Idle",
+		"missingSession": "(no session)"
+	},
+	"dashboard": {
+		"title": "SKPL Dashboard",
+		"subtitle": "System overview and key metrics",
+		"totalTokens": "Total Tokens",
+		"bugs": "Bugs",
+		"wasteRate": "Waste Rate",
+		"projectAnatomy": "Project Anatomy",
+		"quickActions": "Quick Actions",
+		"totalSymbols": "Total Symbols",
+		"filesScanned": "Files Scanned",
+		"scanProject": "Scan Project",
+		"viewBugs": "View Bugs",
+		"memory": "Memory",
+		"firecrawl": "Firecrawl",
+		"cost": "Cost",
+		"openBugs": " open"
+	},
+	"context": {
+		"title": "Context Management",
+		"subtitle": "Project anatomy, symbols, tokens, and memory",
+		"scanning": "Scanning...",
+		"scanProject": "Scan Project",
+		"task": "Task",
+		"files": "files",
+		"symbols": "symbols",
+		"in": "in",
+		"anatomy": "Anatomy",
+		"tokens": "Tokens",
+		"memory": "Memory",
+		"totalSymbols": "Total Symbols",
+		"languages": "Languages",
+		"noAnatomyData": "No anatomy data. Run a scan to get started.",
+		"searchSymbols": "Search symbols (e.g. function name, class name)...",
+		"kind": "Kind",
+		"nameSignature": "Name / Signature",
+		"file": "File",
+		"export": "export",
+		"searchToExplore": "Search for symbols to explore the project anatomy.",
+		"totalTokens": "Total Tokens",
+		"inputTokens": "Input Tokens",
+		"outputTokens": "Output Tokens",
+		"noTokenData": "No token data available yet.",
+		"memoryDescription": "Memory management is available through the Cerebrum API. Use the API directly to store and recall session memories.",
+		"queued": "Queued",
+		"search": "Search",
+		"browse": "Browse",
+		"noSymbolsLoaded": "No symbols loaded",
+		"loadSymbols": "Load Symbols",
+		"selectFileHint": "Select a file from the tree to view details",
+		"autoRefreshing": "Auto-refreshing every 5s",
+		"noFilesToDisplay": "No files to display",
+		"noFilesHint": "Run a scan or provide symbols to build the tree",
+		"noSymbolsIndexed": "No symbols indexed",
+		"noSymbolsIndexedHint": "Run a scan to populate the symbol index",
+		"noSymbolsInFile": "No symbols in this file",
+		"noSymbolsInFileHint": "Pass symbols from parent component to populate this view",
+		"estimatePlaceholder": "Enter text here to estimate token usage...",
+		"estimateHint": "Enter some text above to see token estimates",
+		"memoryKeyPlaceholder": "Enter memory key to recall...",
+		"memoryKey": "Key",
+		"memoryCategory": "Category",
+		"memoryValue": "Value",
+		"memoryValuePlaceholder": "memory value",
+		"loadSessionSummaryFailed": "Failed to load session summary",
+		"noSessionSummary": "No session summary available.",
+		"symbolsInFiles": "symbols in {{files}} files",
+		"entries": "entries",
+		"input": "Input",
+		"output": "Output",
+		"waste": "Waste",
+		"wasteRate": "waste rate",
+		"patterns": "patterns",
+		"lastScan": "Last Scan",
+		"loadTokenFailed": "Failed to load token summary",
+		"tokensUnit": "tokens",
+		"estimatedCost": "estimated cost",
+		"modelDistribution": "Model Distribution",
+		"providerDistribution": "Provider Distribution",
+		"noModelData": "No model data available.",
+		"noProviderData": "No provider data available.",
+		"loadWasteFailed": "Failed to load waste patterns",
+		"wasteDetection": "Waste Detection",
+		"noWastePatterns": "No waste patterns detected.",
+		"tokenUsageEfficient": "Your token usage is efficient.",
+		"wastedTokens": "wasted",
+		"saveMemoryFailed": "Failed to save memory",
+		"saveMemory": "Save Memory",
+		"totalMemories": "Total Memories",
+		"categories": "Categories",
+		"autoRefresh": "Auto Refresh",
+		"statsRefresh": "Stats refresh every 10s",
+		"refreshNow": "Refresh Now",
+		"recallMemory": "Recall Memory",
+		"addMemory": "Add Memory",
+		"memoryList": "Memory List",
+		"noMemoriesHint": "No memories loaded. Use the search or add form above to get started.",
+		"confidence": "Confidence",
+		"access": "Access",
+		"generateContext": "Generate Context",
+		"generating": "Generating...",
+		"includeSections": "Include sections",
+		"generatedContext": "Generated Context",
+		"noContextGenerated": "No context generated yet...",
+		"contextCopied": "Context copied to clipboard",
+		"tokenUsage": "Token Usage",
+		"used": "Used",
+		"tokensWasted": "tokens wasted",
+		"loadingTokenData": "Loading token data...",
+		"noTokenUsageData": "No token usage data yet",
+		"memoryHealth": "Memory System Health"
+	},
+	"buglog": {
+		"title": "Bug Log",
+		"subtitle": "Track and manage errors encountered during agent execution",
+		"refresh": "Refresh",
+		"total": "Total",
+		"open": "Open",
+		"resolved": "Resolved",
+		"duplicates": "Duplicates",
+		"filterByStatus": "Filter by status",
+		"allStatuses": "All Statuses",
+		"all": "All",
+		"inProgress": "In Progress",
+		"duplicate": "Duplicate",
+		"wontFix": "Won't Fix",
+		"noBugs": "No bugs found",
+		"resolve": "Resolve",
+		"dup": "Dup",
+		"duplicateOf": "Duplicate of",
+		"firstSeen": "First",
+		"lastSeen": "Last"
+	},
+	"firecrawl": {
+		"title": "Firecrawl",
+		"subtitle": "Web crawling and scraping skill powered by Firecrawl",
+		"newCrawl": "New Crawl",
+		"urlPlaceholder": "Enter URL to crawl (e.g. https://example.com)...",
+		"crawling": "Crawling...",
+		"crawl": "Crawl",
+		"refresh": "Refresh",
+		"history": "History",
+		"stats": "Stats",
+		"settings": "Settings",
+		"noHistory": "No crawl history yet",
+		"noHistoryHint": "Enter a URL above to start crawling",
+		"pagesCrawled": "pages crawled",
+		"pagesFailed": "failed",
+		"crawlConfig": "Crawl Configuration",
+		"crawlConfigDesc": "Firecrawl skill configuration is available through the skill management panel. Configure API keys, rate limits, and crawl options from the Skills panel.",
+		"totalCrawls": "Total Crawls",
+		"completed": "Completed",
+		"failed": "Failed",
+		"active": "Active",
+		"totalPagesCrawled": "Pages Crawled",
+		"noStats": "No stats available",
+		"loadingStats": "Loading stats...",
+		"loading": "Loading...",
+		"error": "Crawl failed",
+		"pending": "Pending",
+		"running": "Running",
+		"done": "Done"
+	},
+	"desktop": {
+		"title": "Desktop Agents",
+		"subtitle": "Manage connected desktop agent nodes",
+		"addNode": "Add Node",
+		"createNode": "Connect Desktop Agent",
+		"createNodeDesc": "Create a new desktop automation session for remote desktop control and management.",
+		"creating": "Creating...",
+		"create": "Create",
+		"cancel": "Cancel",
+		"createSuccess": "Desktop agent session created",
+		"createFailed": "Creation failed",
+		"loadingNodes": "Loading nodes...",
+		"noNodes": "No desktop agents connected",
+		"noNodesHint": "Click \"Add Node\" to connect a desktop agent",
+		"os": "OS",
+		"version": "Version",
+		"activeSessions": "Active Sessions",
+		"lastSeen": "Last Seen",
+		"connection": "Connection",
+		"connectionDetails": "Connection Details",
+		"protocol": "Protocol",
+		"authentication": "Authentication",
+		"heartbeat": "Heartbeat",
+		"timeout": "Timeout",
+		"desktopSettings": "Desktop Agent Settings",
+		"desktopSettingsDesc": "Desktop agent configuration is managed through the control center. Configure allowed operations, rate limits, and security policies from the server-side settings.",
+		"online": "Online",
+		"offline": "Offline",
+		"idle": "Idle",
+		"busy": "Busy",
+		"connecting": "Connecting",
+		"zoomIn": "Zoom In",
+		"zoomOut": "Zoom Out",
+		"resetZoom": "Reset Zoom",
+		"refreshScreenshot": "Refresh Screenshot",
+		"loadingScreenshot": "Loading screenshot...",
+		"noScreenshot": "No screenshot available",
+		"nodeTitle": "Desktop Nodes",
+		"nodesOnline": "{{connected}} / {{total}} online",
+		"scanningNodes": "Scanning for nodes...",
+		"noNodesConnected": "No desktop nodes connected",
+		"connectNode": "Connect a node",
+		"shots": "shots",
+		"actions": "actions",
+		"justNow": "Just now",
+		"minutesAgo": "{{n}}m ago",
+		"hoursAgo": "{{n}}h ago",
+		"task": "Task",
+		"statusConnected": "Connected",
+		"statusDisconnected": "Disconnected",
+		"statusProcessing": "Processing",
+		"statusError": "Error",
+		"actionClick": "Click",
+		"actionDoubleClick": "Double Click",
+		"actionRightClick": "Right Click",
+		"actionType": "Type",
+		"actionKeyPress": "Key Press",
+		"actionHotkey": "Hotkey",
+		"actionScroll": "Scroll",
+		"actionDrag": "Drag",
+		"actionMove": "Move",
+		"actionWait": "Wait",
+		"actionScreenshot": "Screenshot",
+		"actionOpenApp": "Open App",
+		"actionSwitchApp": "Switch App",
+		"actionCustomCode": "Custom Code",
+		"allStatus": "All Status",
+		"allTypes": "All Types",
+		"searchActions": "Search...",
+		"noActions": "No actions to display",
+		"actionsCompleted": "completed",
+		"actionsFailed": "failed",
+		"actionsCount": "actions",
+		"statusCompleted": "Completed",
+		"statusFailed": "Failed",
+		"statusPending": "Pending",
+		"statusCancelled": "Cancelled",
+		"statusTimedOut": "Timed Out",
+		"screenshot": "Screenshot"
+	},
+	"webIntelligence": {
+		"subtitle": "Multi-engine web search, knowledge retrieval, and deep research",
+		"searchPlaceholder": "Enter search query...",
+		"enginePlaceholder": "Engine (optional)",
+		"emptyHint": "Enter a query to search the web",
+		"tabs": {
+			"search": "Search",
+			"knowledge": "Knowledge",
+			"research": "Research",
+			"engines": "Engines"
+		},
+		"search": {
+			"button": "Search",
+			"foundResults": "Found {{count}} results",
+			"failed": "Search failed"
+		},
+		"knowledge": {
+			"title": "Knowledge Retrieval",
+			"placeholder": "What do you want to know? Describe your information need...",
+			"queryOverride": "Search query override (optional)",
+			"engine": "Engine",
+			"retrieve": "Retrieve",
+			"emptyHint": "Describe what you want to know to retrieve relevant knowledge",
+			"failed": "Knowledge retrieval failed"
+		},
+		"research": {
+			"startResearch": "Start Research",
+			"queryPlaceholder": "Research query...",
+			"contextPlaceholder": "Additional context (optional)",
+			"maxSources": "max sources",
+			"startButton": "Start Research",
+			"tasksHeading": "Research Tasks",
+			"refresh": "Refresh",
+			"noTasks": "No research tasks yet",
+			"sources": "{{count}} sources",
+			"loadingDetails": "Loading task details...",
+			"taskLabel": "Task: {{query}}",
+			"taskId": "Task ID",
+			"sourcesLabel": "Sources",
+			"subQueries": "Sub-queries",
+			"synthesis": "Synthesis",
+			"failed": "Research failed",
+			"loadFailed": "Failed to load task"
+		},
+		"engines": {
+			"loading": "Loading engines...",
+			"available": "Available search engine",
+			"active": "Active",
+			"noEngines": "No engines configured"
+		}
+	},
+	"updates": {
+		"title": "Updates",
+		"subtitle": "View and manage AgentScope updates",
+		"loadFailed": "Failed to load update status. Is the backend running?",
+		"triggerFailed": "Failed to trigger update check. Is the backend running?",
+		"notScheduled": "Not scheduled",
+		"allUpToDate": "All repos up to date",
+		"update": "Update",
+		"behind": "behind",
+		"checking": "Checking...",
+		"checkUpdates": "Check Updates",
+		"noUpdates": "No updates",
+		"upToDate": "Up to date",
+		"upstreamUpdates": "Upstream Updates",
+		"checkNow": "Check Now",
+		"checked": "Checked",
+		"error": "Error",
+		"noUpstreamRepos": "No upstream repositories configured",
+		"never": "Never",
+		"justNow": "Just now",
+		"minutesAgo": "{{n}}m ago",
+		"hoursAgo": "{{n}}h ago"
+	},
+	"codeGeneration": {
+		"title": "Code Generation",
+		"subtitle": "Iterative code generation and sandbox execution",
+		"promptPlaceholder": "Describe what code you want to generate and execute... (e.g. Write a Python script to sort a list of numbers)",
+		"contextPlaceholder": "Additional context, existing code snippets, or requirements...",
+		"generate": "Generate Code",
+		"executing": "Executing...",
+		"output": "Output",
+		"noOutput": "No output",
+		"error": "Execution failed",
+		"tabTask": "Task",
+		"tabDirectRun": "Direct Run",
+		"tabHistory": "History",
+		"executeCodeTask": "Execute Code Task",
+		"taskInstruction": "Task Instruction",
+		"contextOptional": "Context (optional)",
+		"budgetSteps": "Budget Steps",
+		"execute": "Execute",
+		"describeTask": "Describe your coding task to start execution",
+		"executionResult": "Execution Result",
+		"summary": "Summary",
+		"steps": "Steps",
+		"duration": "Duration",
+		"taskId": "Task ID",
+		"executionHistory": "Execution History",
+		"step": "Step {{n}}",
+		"thoughts": "Thoughts",
+		"action": "Action",
+		"result": "Result",
+		"directCodeExecution": "Direct Code Execution",
+		"python": "Python",
+		"bash": "Bash",
+		"timeoutSeconds": "Timeout (s)",
+		"enterCode": "Enter {{language}} code to execute...",
+		"runCode": "Run Code",
+		"stdout": "Stdout",
+		"stderr": "Stderr",
+		"exitCode": "Exit Code",
+		"executionId": "Execution ID",
+		"enterCodeToRun": "Enter code to run directly",
+		"tasks": "Tasks",
+		"loading": "Loading...",
+		"noResults": "No results yet",
+		"loadingResult": "Loading result...",
+		"selectTask": "Select a task from the list to view details",
+		"noExecutionHistory": "No execution history available",
+		"statusSuccess": "Success",
+		"statusFail": "Failed",
+		"statusRunning": "Running"
+	},
+	"nav": {
+		"dashboard": "Dashboard",
+		"chat": "Chat",
+		"knowledge": "Knowledge",
+		"schedule": "Schedule",
+		"desktop": "Desktop",
+		"codeGeneration": "Code Gen",
+		"webIntelligence": "Web Intelligence",
+		"firecrawl": "Firecrawl",
+		"context": "Context",
+		"buglog": "Bug Log",
+		"updates": "Updates",
+		"credential": "Credentials",
+		"team": "Team",
+		"setup": "Setup",
+		"more": "More",
+		"agentMarket": "Agent Market",
+		"admin": "Admin Panel"
+	},
+	"mobile": {
+		"blocked": {
+			"title": "{{feature}} is only available on desktop",
+			"hint": "Switch to desktop for full functionality"
+		},
+		"degrade": {
+			"desktop": "Desktop automation requires a local desktop node and is not available on mobile.",
+			"codeGeneration": "Code generation requires a full IDE environment and sandbox execution, not available on mobile.",
+			"credential": "Credential management involves sensitive operations, best done on desktop.",
+			"context": "Mobile supports read-only context viewing. Editing is available on desktop.",
+			"setup": "Mobile provides simplified setup. Full configuration is available on desktop.",
+			"knowledge": "Mobile supports browsing and searching knowledge bases. Creation and editing are available on desktop.",
+			"schedule": "Mobile supports schedule viewing. Creation and editing are available on desktop.",
+			"updates": "Mobile supports update notifications. Management is available on desktop.",
+			"buglog": "Mobile supports viewing bug lists. Management is available on desktop.",
+			"firecrawl": "Mobile provides simplified crawling. Advanced configuration is available on desktop.",
+			"webIntelligence": "Mobile provides simplified search. Deep research is available on desktop.",
+			"dashboard": "Mobile provides simplified dashboard view. Full data is available on desktop.",
+			"team": "Mobile supports viewing team members. Management is available on desktop."
+		}
+	},
+	"admin": {
+		"title": "Admin Panel",
+		"subtitle": "Manage vector model configuration, knowledge bases, and users.",
+		"accessDenied": "Access Denied",
+		"accessDeniedDesc": "You do not have administrator privileges. Please contact your system administrator if you believe this is an error.",
+		"tabs": {
+			"vectorConfig": "Vector Config",
+			"knowledgeBases": "Knowledge Bases",
+			"users": "Users",
+			"shield": "Security Scan"
+		},
+		"vectorConfig": {
+			"title": "Vector Model Configuration",
+			"provider": "Provider",
+			"selectProvider": "Select provider",
+			"apiKey": "API Key",
+			"enterApiKey": "Enter API key",
+			"baseUrl": "Base URL",
+			"model": "Model",
+			"dimensions": "Dimensions",
+			"saveConfig": "Save Configuration",
+			"configSaved": "Vector config saved",
+			"saveFailed": "Failed to save config"
+		},
+		"knowledgeBases": {
+			"title": "Public Knowledge Bases",
+			"create": "Create",
+			"noKnowledgeBases": "No knowledge bases found",
+			"public": "Public",
+			"edit": "Edit Knowledge Base",
+			"createNew": "Create Knowledge Base",
+			"editDesc": "Update the knowledge base details below.",
+			"createDesc": "Fill in the details to create a new public knowledge base.",
+			"name": "Name",
+			"namePlaceholder": "Knowledge base name",
+			"description": "Description",
+			"descriptionPlaceholder": "Optional description",
+			"update": "Update",
+			"cancel": "Cancel",
+			"deleteTitle": "Delete Knowledge Base",
+			"deleteDesc": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+			"delete": "Delete",
+			"created": "Knowledge base created",
+			"updated": "Knowledge base updated",
+			"deleted": "Knowledge base deleted",
+			"loadFailed": "Failed to load knowledge bases",
+			"saveFailed": "Failed to save",
+			"deleteFailed": "Failed to delete"
+		},
+		"users": {
+			"title": "Users",
+			"noUsers": "No users found",
+			"username": "Username",
+			"role": "Role",
+			"createdAt": "Created At",
+			"lastLogin": "Last Login",
+			"admin": "Admin",
+			"user": "User",
+			"deleteUser": "Delete User",
+			"deleteTitle": "Delete User",
+			"deleteDesc": "Are you sure you want to delete user \"{{name}}\"? This will permanently delete all their knowledge bases, memory data, and user information. This action cannot be undone.",
+			"delete": "Delete",
+			"deleteSuccess": "User deleted successfully",
+			"deleteFailed": "Failed to delete user",
+			"loadFailed": "Failed to load users",
+			"cancel": "Cancel",
+			"cannotDeleteSelf": "Cannot delete your own account",
+			"cannotDeleteAdmin": "Cannot delete admin accounts",
+			"shield": {
+				"title": "Agent Security Scan",
+				"description": "Scan Agent configurations for security risks, sensitive data leaks, and privilege escalation",
+				"selectAgent": "Select Agent",
+				"selectAgentPlaceholder": "Select an agent to scan...",
+				"scan": "Scan",
+				"results": "Scan Results",
+				"passed": "Passed",
+				"findings": "Findings",
+				"categories": "Categories",
+				"status": "Status",
+				"noFindings": "No security issues found. Agent configuration is safe.",
+				"scanFailed": "Scan failed"
+			}
+		},
+		"shield": {
+			"title": "Agent Security Scan",
+			"description": "Scan Agent configurations for security risks, sensitive data leaks, and privilege escalation",
+			"selectAgent": "Select Agent",
+			"selectAgentPlaceholder": "Select an agent to scan...",
+			"scan": "Scan",
+			"results": "Scan Results",
+			"passed": "Passed",
+			"findings": "Findings",
+			"categories": "Categories",
+			"status": "Status",
+			"noFindings": "No security issues found. Agent configuration is safe.",
+			"scanFailed": "Scan failed"
+		}
+	},
+	"agentMarket": {
+		"title": "Agent Market",
+		"subtitle": "Browse pre-configured Agent templates and create one with a single click",
+		"allCategories": "All",
+		"noTemplates": "No Templates",
+		"noTemplatesDesc": "Check back later for more templates",
+		"tools": "Tools",
+		"tags": "Tags",
+		"createAgent": "Create Agent",
+		"created": "Agent \"{{name}}\" created from template",
+		"createFailed": "Failed to create agent"
+	},
+	"whatsapp": {
+		"title": "WhatsApp Notification Setup",
+		"subtitle": "Configure WhatsApp Cloud API to receive AI notifications",
+		"step1": "Register Meta Developer",
+		"step2": "Create WhatsApp App",
+		"step3": "Get API Keys",
+		"step4": "Fill & Save",
+		"phoneNumberId": "Phone Number ID",
+		"accessToken": "Access Token",
+		"defaultRecipient": "Default Recipient",
+		"saveConfig": "Save Configuration",
+		"sendTest": "Send Test Message",
+		"testSuccess": "Test message sent successfully",
+		"testFailed": "Test failed",
+		"faq": "FAQ",
+		"faqNoReceive": "Not receiving test messages?",
+		"faqNoReceiveAnswer": "Add the test number as a WhatsApp contact first, then send any message to it to activate the session.",
+		"faqExpire": "Token expired?",
+		"faqExpireAnswer": "Test tokens are valid for 24 hours. For long-term use, generate a permanent token in the Meta app dashboard.",
+		"faqQuota": "What is the free quota?",
+		"faqQuotaAnswer": "Meta provides 1000 free messages/month on test numbers, sufficient for personal use."
+	}
+}

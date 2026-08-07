@@ -1,0 +1,104 @@
+# Dependabot Configuration
+#
+# Automated dependency updates for:
+# - pip (Python backend)
+# - npm (pnpm frontend)
+# - Docker (container images)
+#
+# All updates are grouped to minimize PR noise and are scheduled weekly.
+
+version: 2
+updates:
+  # =========================================================================
+  # Python (pip) — Backend
+  # =========================================================================
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    # Group all pip updates into a single PR
+    groups:
+      pip-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignore major version bumps (review manually)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels:
+      - "dependencies"
+      - "python"
+    assignees:
+      - "maintainers"
+    # Limit to 5 open PRs at a time
+    open-pull-requests-limit: 5
+    # Allow up to 5 version updates for direct dependencies
+    versioning-strategy: increase
+
+  # =========================================================================
+  # npm (pnpm) — Frontend
+  # =========================================================================
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    # Group all npm updates into a single PR
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignore major version bumps (review manually)
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels:
+      - "dependencies"
+      - "frontend"
+    assignees:
+      - "maintainers"
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+
+  # =========================================================================
+  # Docker — Container Images
+  # =========================================================================
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    labels:
+      - "dependencies"
+      - "docker"
+    assignees:
+      - "maintainers"
+    open-pull-requests-limit: 3
+
+  # =========================================================================
+  # GitHub Actions — CI Workflows
+  # =========================================================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    labels:
+      - "dependencies"
+      - "ci"
+    open-pull-requests-limit: 3

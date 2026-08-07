@@ -1,0 +1,1 @@
+"""Parity tests: TypeScript (OpenWolf) vs Python (SKPL) behavior equivalence."""

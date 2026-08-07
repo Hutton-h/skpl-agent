@@ -1,0 +1,1 @@
+"""SKPL Agent Desktop Skills — desktop automation tool modules."""

@@ -1,0 +1,5 @@
+"""Constants for tool permission system."""
+DEFAULT_DANGEROUS_FILES = ['.gitconfig', '.gitmodules', '.bashrc', '.bash_profile', '.zshrc', '.zprofile', '.profile', '.ssh/config', '.ssh/authorized_keys', '.netrc', '.npmrc', '.pypirc', '.env', '.envrc', '.env.local', '.env.development', '.env.development.local', '.env.test', '.env.test.local', '.env.staging', '.env.production', '.env.production.local']
+DEFAULT_DANGEROUS_DIRECTORIES = ['.git', '.vscode', '.idea', '.ssh']
+DANGEROUS_COMMANDS = ['rm -rf', 'sudo rm', 'dd', 'mkfs', 'fdisk', 'format', 'chmod 777', 'chmod -R 777', 'chown -R', 'kill -9', '> /dev/']
+DANGEROUS_NODE_TYPES = {'command_substitution', 'process_substitution', 'expansion', 'subshell', 'for_statement', 'while_statement', 'until_statement', 'if_statement', 'case_statement', 'function_definition', 'test_command'}

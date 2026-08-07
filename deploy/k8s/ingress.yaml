@@ -1,0 +1,112 @@
+# SKPL Agent — Ingress
+# Routes external traffic to the frontend and backend services.
+#
+# Requires an ingress controller (nginx, traefik, etc.) installed in the cluster.
+# For local development with minikube: minikube addons enable ingress
+#
+# Usage:
+#   kubectl apply -f deploy/k8s/ingress.yaml
+#   kubectl -n skpl-agent get ingress
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skpl-agent
+  namespace: skpl-agent
+  labels:
+    app.kubernetes.io/name: skpl-agent
+    app.kubernetes.io/part-of: skpl-agent
+  annotations:
+    # Ingress class — change to your controller (nginx, traefik, etc.)
+    kubernetes.io/ingress.class: nginx
+
+    # TLS
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+    # Proxy settings
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+
+    # WebSocket support (for desktop node)
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-set-headers: |
+      Upgrade $http_upgrade;
+      Connection "upgrade";
+
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+
+    # CORS headers
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+
+spec:
+  tls:
+    - hosts:
+        - skpl-agent.example.com
+        - api.skpl-agent.example.com
+      secretName: skpl-agent-tls
+
+  rules:
+    # Frontend (main domain)
+    - host: skpl-agent.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: skpl-frontend
+                port:
+                  number: 80
+
+    # Backend API
+    - host: api.skpl-agent.example.com
+      http:
+        paths:
+          # REST API
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: skpl-backend
+                port:
+                  number: 8000
+
+          # WebSocket (desktop node)
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: skpl-backend
+                port:
+                  number: 8000
+
+          # Health / metrics (no auth)
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: skpl-backend
+                port:
+                  number: 8000
+
+          - path: /metrics
+            pathType: Exact
+            backend:
+              service:
+                name: skpl-backend
+                port:
+                  number: 8000

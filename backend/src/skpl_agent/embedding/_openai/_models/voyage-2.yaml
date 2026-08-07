@@ -1,0 +1,14 @@
+name: voyage-2
+label: Voyage AI voyage-2
+status: active
+
+input_types:
+  - text/plain
+
+output_types:
+  - application/x-embedding
+
+context_size: 32000
+
+dimensions: 1024
+supported_dimensions: [1024]

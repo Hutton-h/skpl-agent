@@ -1,0 +1,135 @@
+"""The read tool in agentscope."""
+import fnmatch
+from typing import Any, List
+from .._base import ToolBase, ToolMiddlewareBase
+from ...permission import PermissionContext, PermissionDecision, PermissionBehavior, PermissionRule
+from .._response import ToolChunk
+from ...message import TextBlock, ToolResultState
+from ...state import AgentState
+from ._backend import BackendBase, _normalize_newlines
+
+class Read(ToolBase):
+    """The read tool."""
+    name: str = 'Read'
+    'The tool name presented to the agent.'
+    description: str = "Reads a file from the local filesystem. You can access any file directly by using this tool.\nAssume this tool is able to read all files on the machine. If the User provides a path to a file assume that path is valid. It is okay to read a file that does not exist; an error will be returned.\n\nUsage:\n- The file_path parameter must be an absolute path, not a relative path\n- By default, it reads up to 2000 lines starting from the beginning of the file\n- You can optionally specify a line offset and limit (especially handy for long files), but it's recommended to read the whole file by not providing these parameters\n- Results are returned using cat -n format, with line numbers starting at 1\n- This tool allows you to read images (eg PNG, JPG, etc). When reading an image file the contents are presented visually as you're a multimodal LLM.\n- This tool can read PDF files (.pdf). For large PDFs (more than 10 pages), you MUST provide the pages parameter to read specific pages."
+    'The description presented to the agent.'
+    input_schema: dict[str, Any] = {'type': 'object', 'properties': {'file_path': {'type': 'string', 'description': 'The absolute path to the file to read.'}, 'offset': {'type': 'integer', 'description': 'Optional 1-based line number to start reading from (default: 1)', 'default': 1, 'minimum': 1}, 'limit': {'type': 'integer', 'description': 'Optional maximum number of lines to read (default: 2000, max: 2000)', 'default': 2000, 'maximum': 2000, 'minimum': 1}}, 'required': ['file_path']}
+    is_mcp: bool = False
+    is_read_only: bool = True
+    is_concurrency_safe: bool = True
+    is_external_tool: bool = False
+    is_state_injected: bool = True
+
+    def __init__(self, max_line_characters: int=2000, middlewares: List[ToolMiddlewareBase] | None=None, backend: BackendBase | None=None) -> None:
+        """Initialize the read tool.
+
+        Args:
+            max_line_characters (`int`, defaults to 2000):
+                The maximum number of characters to include for each line when
+                reading files. Lines longer than this will be truncated with
+                a "[truncated]" suffix. This prevents overwhelming the agent
+                with excessively long lines while still providing useful
+                content.
+            middlewares (`List[ToolMiddlewareBase] | None`, optional):
+                Tool middlewares wrapping the tool execution.
+            backend (`BackendBase | None`, optional):
+                The sandbox backend to use for file I/O. When ``None``,
+                a :class:`LocalBackend` is created.
+        """
+        from ._backend import LocalBackend
+        super().__init__(middlewares=middlewares)
+        self._max_line_characters = max_line_characters
+        self._backend = backend or LocalBackend()
+
+    async def check_permissions(self, tool_input: dict[str, Any], context: PermissionContext) -> PermissionDecision:
+        """Check permissions for file reading.
+
+        Read is a read-only tool. In EXPLORE mode the engine already handles
+        the ALLOW via _check_explore_mode, so here we just return PASSTHROUGH
+        to let the engine continue with rule matching.
+        """
+        return PermissionDecision(behavior=PermissionBehavior.PASSTHROUGH, message='File reading is read-only.')
+
+    async def match_rule(self, rule_content: str | None, tool_input: dict[str, Any]) -> bool:
+        """Check if a permission rule matches the file path.
+
+        Matches rule_content as a glob pattern against the "file_path"
+        parameter using fnmatch. If rule_content is None, matches all
+        invocations (tool-name-level rule).
+
+        Args:
+            rule_content (`str | None`):
+                Glob pattern to match against the file path (e.g., "src/**"),
+                or None to match all invocations
+            tool_input (`dict[str, Any]`):
+                The tool input data containing "file_path" key
+
+        Returns:
+            `bool`:
+                True if the glob pattern matches the file path, False otherwise
+        """
+        if rule_content is None:
+            return True
+        file_path = tool_input.get('file_path', '')
+        if not file_path:
+            return False
+        return fnmatch.fnmatch(file_path, rule_content)
+
+    async def generate_suggestions(self, tool_input: dict[str, Any]) -> List[PermissionRule]:
+        """Generate suggested permission rules for the file path.
+
+        Suggests a glob pattern covering the parent directory of the file,
+        allowing the user to grant permission for the entire directory at once.
+
+        Args:
+            tool_input (`dict[str, Any]`):
+                The tool input data containing "file_path" key
+
+        Returns:
+            `List[PermissionRule]`:
+                A single suggested rule covering the parent directory
+                (e.g., file "/src/main.py" -> rule "src/**")
+        """
+        file_path = tool_input.get('file_path', '')
+        if not file_path:
+            return []
+        parent = self._backend.dirname(file_path)
+        pattern = parent.rstrip('/\\') + '/**' if parent else '**'
+        return [PermissionRule(tool_name=self.name, rule_content=pattern, behavior=PermissionBehavior.ALLOW, source='suggested')]
+
+    async def call(self, file_path: str, offset: int=1, limit: int=2000, _agent_state: AgentState | None=None) -> ToolChunk:
+        """Read the file and return the content with line numbers."""
+        if not self._backend.isabs(file_path):
+            return ToolChunk(content=[TextBlock(text=f'Error: file_path must be an absolute path, got: {file_path}')], state=ToolResultState.ERROR, is_last=True)
+        if not await self._backend.file_exists(file_path):
+            return ToolChunk(content=[TextBlock(text=f'Error: File does not exist: {file_path}')], state=ToolResultState.ERROR, is_last=True)
+        if await self._backend.is_dir(file_path):
+            return ToolChunk(content=[TextBlock(text=f'Error: Path is a directory, not a file: {file_path}')], state=ToolResultState.ERROR, is_last=True)
+        try:
+            lines = None
+            if _agent_state is not None:
+                cache = await _agent_state.tool_context.get_cache(file_path)
+                if cache is not None:
+                    lines = cache.lines
+            if lines is None:
+                raw = await self._backend.read_file(file_path)
+                content_str = raw.decode('utf-8', errors='replace')
+                content_str = _normalize_newlines(content_str)
+                lines = content_str.splitlines(keepends=True)
+                if _agent_state is not None:
+                    await _agent_state.tool_context.cache_file(file_path=file_path, lines=lines)
+            start_idx = offset - 1
+            end_idx = start_idx + limit
+            selected_lines = lines[start_idx:end_idx]
+            formatted_lines = []
+            for (i, line) in enumerate(selected_lines, start=offset):
+                line_content = line.rstrip('\n\r')
+                if len(line_content) > self._max_line_characters:
+                    line_content = line_content[:self._max_line_characters] + '[truncated]'
+                formatted_line = f'{i:6d}\t{line_content}'
+                formatted_lines.append(formatted_line)
+            result = '\n'.join(formatted_lines)
+            return ToolChunk(content=[TextBlock(text=result)], state=ToolResultState.RUNNING, is_last=True)
+        except Exception as e:
+            return ToolChunk(content=[TextBlock(text=f'Error reading file: {str(e)}')], state=ToolResultState.ERROR, is_last=True)

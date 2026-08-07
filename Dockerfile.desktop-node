@@ -1,0 +1,77 @@
+# SKPL Agent — Desktop Node Docker Image (Windows)
+#
+# This Dockerfile builds a Windows container image for the SKPL desktop
+# automation node.  The desktop node runs on a Windows machine and connects
+# to the SKPL control center via WebSocket to execute desktop automation
+# commands (click, type, screenshot, OCR, etc.).
+#
+# Requirements:
+#   - Windows Server 2022 or Windows 11 host
+#   - Docker Desktop with Windows containers enabled
+#   - GPU support optional (for grounding model)
+#
+# Build:
+#   docker build -f Dockerfile.desktop-node -t skpl-agent/desktop-node:latest .
+#
+# Run:
+#   docker run --rm -it `
+#     -e SKPL_DESKTOP_WS_HOST=control-center `
+#     -e SKPL_DESKTOP_WS_PORT=8001 `
+#     -e SKPL_DESKTOP_JWT_SECRET=your-secret `
+#     skpl-agent/desktop-node:latest
+
+# ---- Stage 1: Base Python with Windows dependencies ----
+FROM python:3.12-windowsservercore-ltsc2022
+
+# Set shell to PowerShell for Windows containers
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';"]
+
+# Environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    SKPL_DESKTOP_WS_HOST=localhost \
+    SKPL_DESKTOP_WS_PORT=8001 \
+    SKPL_DESKTOP_WS_TOKEN_EXPIRY=3600 \
+    SKPL_DESKTOP_ACTION_TIMEOUT=30 \
+    SKPL_DESKTOP_OCR_ENABLED=false \
+    SKPL_DESKTOP_GROUNDING_DEVICE=cpu
+
+# Install Windows desktop dependencies
+# Note: pyautogui and related packages require Windows GUI subsystem
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Copy project files
+WORKDIR C:\\app
+COPY backend/ backend/
+COPY pyproject.toml .
+COPY README.md .
+
+# Install SKPL with desktop dependencies
+RUN pip install --no-cache-dir -e ".[desktop]"
+
+# Install optional desktop OCR support (uncomment if needed, large download)
+# RUN pip install --no-cache-dir -e ".[desktop-ocr]"
+
+# Install optional grounding support (uncomment if GPU is available)
+# RUN pip install --no-cache-dir -e ".[desktop-grounding]"
+
+# Create data directory
+RUN mkdir C:\\app\\data -Force
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import socket; s = socket.socket(); s.connect(('localhost', int($env:SKPL_DESKTOP_WS_PORT))); s.close()" || exit 1
+
+# Entry point — start the desktop node
+ENTRYPOINT ["python", "-m", "skpl_agent.desktop_node", "serve", \
+    "--host", "0.0.0.0", \
+    "--port", "8001"]
+
+# Labels
+LABEL org.opencontainers.image.title="SKPL Agent Desktop Node" \
+      org.opencontainers.image.description="Desktop automation node for SKPL Agent" \
+      org.opencontainers.image.vendor="SKPL Agent Contributors" \
+      org.opencontainers.image.licenses="AGPL-3.0" \
+      org.opencontainers.image.source="https://github.com/skpl-agent/skpl-agent"

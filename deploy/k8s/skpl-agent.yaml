@@ -1,0 +1,421 @@
+# SKPL Agent Kubernetes Deployment
+# Minimal production deployment with backend, frontend, PostgreSQL, and Redis.
+#
+# Usage:
+#   kubectl apply -f deploy/k8s/
+#   kubectl -n skpl-agent get pods
+#   kubectl -n skpl-agent port-forward svc/skpl-frontend 8080:80
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: skpl-agent
+  labels:
+    app.kubernetes.io/part-of: skpl-agent
+
+---
+# =========================================================================
+# Secrets
+# =========================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: skpl-secrets
+  namespace: skpl-agent
+type: Opaque
+stringData:
+  secret-key: "change-me-in-production"
+  jwt-secret: "change-me-in-production"
+  db-password: "skpl_secret"
+  # LLM API keys — set via kubectl or sealed-secrets in production
+  openai-api-key: ""
+  anthropic-api-key: ""
+  firecrawl-api-key: ""
+
+---
+# =========================================================================
+# ConfigMap
+# =========================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skpl-config
+  namespace: skpl-agent
+data:
+  SKPL_HOST: "0.0.0.0"
+  SKPL_PORT: "8000"
+  SKPL_LOG_LEVEL: "INFO"
+  SKPL_DB_USER: "skpl"
+  SKPL_DB_NAME: "skpl_agent"
+  OTEL_SERVICE_NAME: "skpl-agent-backend"
+
+---
+# =========================================================================
+# PostgreSQL
+# =========================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: skpl-postgres
+  namespace: skpl-agent
+spec:
+  selector:
+    app: skpl-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: skpl-postgres
+  namespace: skpl-agent
+spec:
+  serviceName: skpl-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skpl-postgres
+  template:
+    metadata:
+      labels:
+        app: skpl-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: skpl-config
+                  key: SKPL_DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: skpl-secrets
+                  key: db-password
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: skpl-config
+                  key: SKPL_DB_NAME
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "skpl"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "skpl"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+# =========================================================================
+# Redis
+# =========================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: skpl-redis
+  namespace: skpl-agent
+spec:
+  selector:
+    app: skpl-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skpl-redis
+  namespace: skpl-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skpl-redis
+  template:
+    metadata:
+      labels:
+        app: skpl-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: skpl-redis-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: skpl-redis-pvc
+  namespace: skpl-agent
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# =========================================================================
+# Backend
+# =========================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: skpl-backend
+  namespace: skpl-agent
+spec:
+  selector:
+    app: skpl-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skpl-backend
+  namespace: skpl-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: skpl-backend
+  template:
+    metadata:
+      labels:
+        app: skpl-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/skpl-agent/skpl-agent-backend:latest
+          imagePullPolicy: Always
+          env:
+            - name: SKPL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: skpl-config
+                  key: SKPL_HOST
+            - name: SKPL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: skpl-config
+                  key: SKPL_PORT
+            - name: SKPL_LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: skpl-config
+                  key: SKPL_LOG_LEVEL
+            - name: SKPL_DB_URL
+              value: "postgresql+asyncpg://skpl:$(SKPL_DB_PASSWORD)@skpl-postgres:5432/skpl_agent"
+            - name: SKPL_REDIS_URL
+              value: "redis://skpl-redis:6379/0"
+            - name: SKPL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: skpl-secrets
+                  key: db-password
+            - name: SKPL_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: skpl-secrets
+                  key: secret-key
+            - name: SKPL_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: skpl-secrets
+                  key: jwt-secret
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: skpl-secrets
+                  key: openai-api-key
+                  optional: true
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: skpl-secrets
+                  key: anthropic-api-key
+                  optional: true
+            - name: FIRECRAWL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: skpl-secrets
+                  key: firecrawl-api-key
+                  optional: true
+            - name: OTEL_SERVICE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: skpl-config
+                  key: OTEL_SERVICE_NAME
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+---
+# =========================================================================
+# Frontend
+# =========================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: skpl-frontend
+  namespace: skpl-agent
+spec:
+  selector:
+    app: skpl-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skpl-frontend
+  namespace: skpl-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: skpl-frontend
+  template:
+    metadata:
+      labels:
+        app: skpl-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/skpl-agent/skpl-agent-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+# =========================================================================
+# Ingress (optional — uncomment and configure for external access)
+# =========================================================================
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: skpl-ingress
+#   namespace: skpl-agent
+#   annotations:
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+#     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+#   spec:
+#     ingressClassName: nginx
+#     tls:
+#       - hosts:
+#           - skpl-agent.example.com
+#         secretName: skpl-tls
+#     rules:
+#       - host: skpl-agent.example.com
+#         http:
+#           paths:
+#             - path: /api
+#               pathType: Prefix
+#               backend:
+#                 service:
+#                   name: skpl-backend
+#                   port:
+#                     number: 8000
+#             - path: /ws
+#               pathType: Prefix
+#               backend:
+#                 service:
+#                   name: skpl-backend
+#                   port:
+#                     number: 8000
+#             - path: /
+#               pathType: Prefix
+#               backend:
+#                 service:
+#                   name: skpl-frontend
+#                   port:
+#                     number: 80

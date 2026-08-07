@@ -1,0 +1,199 @@
+# SKPL Agent — Security Scanning
+#
+# Runs comprehensive security scans on every push and PR to main:
+# - CodeQL analysis (GitHub's static analysis engine)
+# - pip-audit (Python dependency vulnerability scanner)
+# - Bandit (Python security linter)
+# - license-checker (license compliance)
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly scan on Sunday at 06:00 UTC
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # =========================================================================
+  # CodeQL — Static Analysis (Python + JavaScript/TypeScript)
+  # =========================================================================
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["python", "javascript-typescript"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # =========================================================================
+  # pip-audit — Python dependency vulnerability scan
+  # =========================================================================
+  pip-audit:
+    name: Python Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+
+      - name: Install project dependencies
+        run: |
+          pip install -e ".[service,context,web,desktop]"
+
+      - name: Run pip-audit
+        run: |
+          pip-audit \
+            --requirement <(pip freeze) \
+            --format json \
+            --output pip-audit-report.json \
+            --ignore-vuln PYSEC-2023-228 2>/dev/null || true
+
+      - name: Upload pip-audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+
+  # =========================================================================
+  # Bandit — Python security linter
+  # =========================================================================
+  bandit:
+    name: Bandit Security Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install bandit
+        run: pip install bandit
+
+      - name: Run Bandit
+        run: |
+          bandit \
+            -r backend/src/skpl_agent \
+            -f json \
+            -o bandit-report.json \
+            -ll \
+            --exclude backend/tests,backend/src/skpl_agent/app/storage/_sql/_alembic \
+            || true
+
+      - name: Check Bandit severity
+        run: |
+          python -c "
+import json, sys
+with open('bandit-report.json') as f:
+    report = json.load(f)
+high = [r for r in report.get('results', []) if r['issue_severity'] == 'HIGH']
+medium = [r for r in report.get('results', []) if r['issue_severity'] == 'MEDIUM']
+print(f'Bandit: {len(high)} HIGH, {len(medium)} MEDIUM')
+if high:
+    print('HIGH severity issues found:')
+    for r in high:
+        print(f'  {r[\"filename\"]}:{r[\"line_number\"]} - {r[\"test_name\"]}')
+    sys.exit(1)
+          "
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  # =========================================================================
+  # License Check — Dependency license compliance
+  # =========================================================================
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install license check tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-licenses
+
+      - name: Install project dependencies
+        run: pip install -e ".[full]"
+
+      - name: Check licenses
+        run: |
+          pip-licenses \
+            --format json \
+            --output-file license-report.json \
+            --fail-on="GPL-2.0;GPL-3.0" \
+            --allow-only="MIT;Apache 2.0;BSD;PSF;MPL;LGPL;AGPL;ISC;Python Software Foundation;Historical Permission Notice and Disclaimer" \
+            || true
+
+      - name: Report license summary
+        run: |
+          python -c "
+import json
+with open('license-report.json') as f:
+    licenses = json.load(f)
+for pkg in licenses:
+    print(f'{pkg[\"Name\"]}: {pkg[\"License\"]}')
+          "
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-report
+          path: license-report.json

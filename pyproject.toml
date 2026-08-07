@@ -1,0 +1,393 @@
+[project]
+name = "skpl-agent"
+dynamic = ["version"]
+description = "SKPL Agent - Super Knowledge & Process Learning Agent Platform"
+readme = "README.md"
+authors = [
+    { name = "SKPL Agent Contributors" }
+]
+license = "AGPL-3.0"
+license-files = ["LICENSE"]
+keywords = ["agent", "multi-agent", "LLM", "AI", "desktop-automation", "web-scraping", "context-management"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    # ===== AgentScope Core (from upstream) =====
+    "aioitertools",
+    "anthropic",
+    "dashscope",
+    "docstring_parser",
+    "filetype",
+    "json5",
+    "json_repair",
+    "mcp<2.0.0",
+    "httpx",
+    "numpy",
+    "openai",
+    "python-datauri",
+    "opentelemetry-api>=1.39.0",
+    "opentelemetry-sdk>=1.39.0",
+    "opentelemetry-exporter-otlp>=1.39.0",
+    "opentelemetry-semantic-conventions>=0.60b0",
+    "python-socketio",
+    "shortuuid",
+    "python-frontmatter",
+    "jinja2",
+    "aiofiles",
+    "tree_sitter",
+    "tree_sitter_bash",
+    "jsonschema",
+    "tzdata",
+    # ===== OpenWolf: Context Management =====
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite",
+    "regex",
+    "ujson",
+    # ===== Agent-S: Desktop Automation (server-side scheduling) =====
+    "websockets>=12.0",
+    "pyjwt>=2.8",
+    # ===== Firecrawl: Web Scraping =====
+    "crawl4ai>=0.4.0",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "markdownify>=0.4",
+    "trafilatura>=1.12",
+    # ===== SKPL Common =====
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "pyyaml>=6.0",
+    "tenacity>=8.0",
+    "structlog>=24.0",
+    # ===== SKPL Auth =====
+    "passlib>=1.7",
+    "bcrypt>=4.0",
+]
+
+[project.optional-dependencies]
+# ===== Model APIs (from AgentScope) =====
+model-gemini = ["google-genai"]
+model-ollama = ["ollama>=0.5.4"]
+model-xai = ["xai-sdk"]
+models = [
+    "skpl-agent[model-gemini]",
+    "skpl-agent[model-ollama]",
+    "skpl-agent[model-xai]",
+]
+
+# ===== Service (from AgentScope) =====
+service = [
+    "fastapi",
+    "uvicorn",
+    "apscheduler",
+    "ag-ui-protocol>=0.1.10",
+]
+
+# ===== Storage backends (from AgentScope) =====
+storage-redis = ["redis"]
+storage-sql = [
+    "sqlalchemy[asyncio]>=2.0",
+    "alembic>=1.13",
+]
+storage-s3 = ["aioboto3"]
+
+# ===== Workspace / Sandbox backends (from AgentScope) =====
+workspace-docker = ["aiodocker"]
+workspace-e2b = ["e2b"]
+workspace-daytona = ["daytona"]
+workspace-k8s = ["kubernetes-asyncio"]
+workspace-opensandbox = ["opensandbox"]
+workspace = [
+    "skpl-agent[workspace-docker]",
+    "skpl-agent[workspace-e2b]",
+    "skpl-agent[workspace-daytona]",
+    "skpl-agent[workspace-k8s]",
+    "skpl-agent[workspace-opensandbox]",
+]
+
+# ===== Tools (from AgentScope) =====
+tools = ["ripgrep"]
+
+# ===== Vector stores (from AgentScope) =====
+vdb-qdrant = ["qdrant-client"]
+vdb-milvus = [
+    "pymilvus>=2.4.0",
+    "milvus-lite>=3.1.0",
+]
+vdb-mongodb = ["pymongo>=4.7"]
+vdb-elasticsearch = ["elasticsearch[async]>=8.12"]
+
+# ===== RAG (from AgentScope) =====
+rag = [
+    "pypdf",
+    "python-pptx",
+    "python-docx",
+    "openpyxl>=3.1.5",
+    "xlrd>=2.0",
+    "pandas",
+]
+
+# ===== Long-term memory (from AgentScope) =====
+memory-mem0 = ["mem0ai>=2.0.0"]
+memory-reme = ["reme-ai>=0.4.0.6"]
+memory = [
+    "skpl-agent[memory-mem0]",
+    "skpl-agent[memory-reme]",
+]
+
+# ===== SKPL: Context Management (OpenWolf) =====
+context = [
+    "tree-sitter-language-pack>=0.4",
+    "tree-sitter-python",
+    "tree-sitter-typescript",
+    "tree-sitter-javascript",
+    "tree-sitter-go",
+    "tree-sitter-rust",
+    "tree-sitter-java",
+    "tree-sitter-c",
+    "tree-sitter-cpp",
+    "tree-sitter-c-sharp",
+    "tree-sitter-ruby",
+    "tree-sitter-php",
+    "tree-sitter-swift",
+    "tree-sitter-kotlin",
+    "click>=8.0",
+]
+
+# ===== SKPL: Desktop Automation (Agent-S) =====
+desktop = [
+    "pyautogui>=0.9.54",
+    "pillow>=10.0",
+    "mss>=9.0",
+    "pyperclip>=1.8",
+    "pynput>=1.7",
+    "websockets>=12.0",
+    "pyjwt>=2.8",
+    "pydantic>=2.0",
+]
+
+# ===== SKPL: Desktop OCR (optional, large) =====
+desktop-ocr = [
+    "paddleocr>=2.8",
+    "paddlepaddle>=3.0",
+    "opencv-python-headless>=4.9",
+]
+
+# ===== SKPL: Grounding (optional) =====
+desktop-grounding = [
+    "torch>=2.0",
+    "transformers>=4.40",
+    "huggingface-hub>=0.20",
+]
+
+# ===== SKPL: Web Scraping (Firecrawl) =====
+web = [
+    "crawl4ai>=0.4.0",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "markdownify>=0.4",
+    "trafilatura>=1.12",
+    "selenium>=4.20",
+    "playwright>=1.45",
+    "scrapy>=2.11",
+]
+
+# ===== SKPL: Update Detection =====
+update = [
+    "gitpython>=3.1",
+    "packaging>=24.0",
+    "semver>=3.0",
+]
+
+# ===== Full Install =====
+full = [
+    "skpl-agent[models]",
+    "skpl-agent[service]",
+    "skpl-agent[storage-redis]",
+    "skpl-agent[storage-sql]",
+    "skpl-agent[storage-s3]",
+    "skpl-agent[workspace]",
+    "skpl-agent[tools]",
+    "skpl-agent[rag]",
+    "skpl-agent[vdb-qdrant]",
+    "skpl-agent[vdb-milvus]",
+    "skpl-agent[vdb-mongodb]",
+    "skpl-agent[vdb-elasticsearch]",
+    "skpl-agent[memory]",
+    "skpl-agent[context]",
+    "skpl-agent[web]",
+    "skpl-agent[update]",
+]
+
+# ===== Development =====
+dev = [
+    "skpl-agent[full]",
+    "pre-commit",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-forked",
+    "pytest-xdist",
+    "myst_parser",
+    "matplotlib",
+    "fakeredis",
+    "aiosqlite",
+    "moto[server,s3]",
+    "boto3",
+    "reportlab",
+    "ruff",
+    "mypy",
+    "types-pyyaml",
+    "types-requests",
+    "locust",
+]
+
+# ===== Deprecated aliases (from AgentScope, kept for compatibility) =====
+gemini = ["skpl-agent[model-gemini]"]
+ollama = ["skpl-agent[model-ollama]"]
+xai = ["skpl-agent[model-xai]"]
+storage = ["skpl-agent[storage-redis]"]
+sql = ["skpl-agent[storage-sql]"]
+s3 = ["skpl-agent[storage-s3]"]
+k8s = ["skpl-agent[workspace-k8s]"]
+milvuslite = ["skpl-agent[vdb-milvus]"]
+mongodb = ["skpl-agent[vdb-mongodb]"]
+elasticsearch = ["skpl-agent[vdb-elasticsearch]"]
+mem0 = ["skpl-agent[memory-mem0]"]
+reme = ["skpl-agent[memory-reme]"]
+
+[project.urls]
+Homepage = "https://github.com/skpl-agent/skpl-agent"
+Documentation = "https://skpl-agent.dev/"
+Repository = "https://github.com/skpl-agent/skpl-agent"
+
+[project.scripts]
+skpl-agent = "skpl_agent.cli:main"
+skpl-desktop-node = "skpl_agent.desktop_node.cli:main"
+
+[project.entry-points."skpl_agent.skills"]
+firecrawl = "skpl_agent.skill._firecrawl:FirecrawlSkill"
+
+[tool.setuptools]
+packages = { find = { where = ["backend/src"] } }
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = [
+    "py.typed",
+    "_models/*.yaml",
+    "_cosyvoice_models/*.yaml",
+]
+"skpl_agent.workspace._docker" = ["Dockerfile*.template"]
+"skpl_agent.app.storage._sql" = [
+    "_alembic/alembic.ini",
+    "_alembic/script.py.mako",
+    "_alembic/env.py",
+    "_alembic/versions/*.py",
+]
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "skpl_agent._version.__version__"}
+
+# ===== Tool Configurations =====
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+exclude = [
+    "backend/src/skpl_agent/app/storage/_sql/_alembic/",
+    ".git",
+    "__pycache__",
+    ".tox",
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+    "B008", # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["skpl_agent"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "backend/src/skpl_agent/app/storage/_sql/_alembic/",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend/src"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "asyncio: marks tests as async tests",
+    "integration: marks tests as integration tests",
+    "desktop: marks tests that require a desktop environment",
+    "ocr: marks tests that require OCR dependencies",
+]
+
+[tool.coverage.run]
+source = ["backend/src/skpl_agent"]
+omit = [
+    "backend/src/skpl_agent/app/storage/_sql/_alembic/*",
+    "backend/tests/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.pyright]
+include = ["backend/src"]
+exclude = ["backend/tests", "backend/src/skpl_agent/app/storage/_sql/_alembic"]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"

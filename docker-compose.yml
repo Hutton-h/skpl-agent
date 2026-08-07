@@ -1,0 +1,150 @@
+version: "3.9"
+
+# ───────────────────────────────────────────────────────────
+# SKPL Agent 控制中心 Docker Compose 部署
+# ───────────────────────────────────────────────────────────
+# 部署命令:
+#   docker compose up -d              # 启动所有服务
+#   docker compose ps                 # 查看状态
+#   docker compose logs -f backend    # 查看后端日志
+#   docker compose down               # 停止所有服务
+#   docker compose down -v            # 停止并删除数据卷
+# ───────────────────────────────────────────────────────────
+
+services:
+  # ── PostgreSQL 数据库 ──────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: skpl-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: skpl
+      POSTGRES_USER: skpl
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-skpl_secure_password_2026}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skpl -d skpl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - skpl-network
+
+  # ── Redis 缓存/消息队列 ────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: skpl-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:-skpl_redis_2026}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - skpl-network
+
+  # ── SKPL Agent 后端 ────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: skpl-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      SKPL_CORE_DATABASE_URL: "postgresql+asyncpg://skpl:${POSTGRES_PASSWORD:-skpl_secure_password_2026}@postgres:5432/skpl"
+      SKPL_CORE_REDIS_URL: "redis://:${REDIS_PASSWORD:-skpl_redis_2026}@redis:6379/0"
+      # Auth
+      SKPL_AUTH_MODE: jwt
+      SKPL_AUTH_JWT_SECRET: ${JWT_SECRET}
+      SKPL_AUTH_JWT_ALGORITHM: HS256
+      SKPL_AUTH_JWT_EXPIRY_HOURS: 168
+      # Mem0
+      SKPL_MEM0_ENABLED: "true"
+      SKPL_MEM0_LLM_PROVIDER: ${MEM0_LLM_PROVIDER:-deepseek}
+      SKPL_MEM0_LLM_MODEL: ${MEM0_LLM_MODEL:-deepseek-chat}
+      SKPL_MEM0_LLM_API_KEY: ${MEM0_LLM_API_KEY}
+      SKPL_MEM0_EMBEDDER_PROVIDER: ${MEM0_EMBEDDER_PROVIDER:-openai}
+      SKPL_MEM0_EMBEDDER_MODEL: ${MEM0_EMBEDDER_MODEL:-voyage-3-lite}
+      SKPL_MEM0_EMBEDDER_API_KEY: ${MEM0_EMBEDDER_API_KEY}
+      SKPL_MEM0_EMBEDDER_BASE_URL: ${MEM0_EMBEDDER_BASE_URL:-https://api.voyageai.com/v1}
+      # Global Embedding
+      SKPL_GLOBAL_EMBEDDING_PROVIDER: ${GLOBAL_EMBEDDING_PROVIDER:-openai}
+      SKPL_GLOBAL_EMBEDDING_MODEL: ${GLOBAL_EMBEDDING_MODEL:-voyage-3-lite}
+      SKPL_GLOBAL_EMBEDDING_API_KEY: ${GLOBAL_EMBEDDING_API_KEY}
+      SKPL_GLOBAL_EMBEDDING_BASE_URL: ${GLOBAL_EMBEDDING_BASE_URL:-https://api.voyageai.com/v1}
+      SKPL_GLOBAL_EMBEDDING_DIMENSIONS: "1024"
+      # CORS
+      SKPL_CORE_CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:4173}
+    volumes:
+      - backend_data:/app/data
+      - backend_logs:/app/logs
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - skpl-network
+
+  # ── SKPL Agent 前端 ────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: skpl-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "127.0.0.1:4173:4173"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:4173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - skpl-network
+
+# ── 数据卷 ────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    name: skpl-postgres-data
+  redis_data:
+    name: skpl-redis-data
+  backend_data:
+    name: skpl-backend-data
+  backend_logs:
+    name: skpl-backend-logs
+
+# ── 网络 ──────────────────────────────────────────────────
+networks:
+  skpl-network:
+    name: skpl-network
+    driver: bridge

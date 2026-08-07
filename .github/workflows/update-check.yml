@@ -1,0 +1,168 @@
+# SKPL Agent — Upstream Update Check
+# Runs daily at 00:00 UTC to check if upstream repos have new commits.
+# When updates are detected, creates an issue for manual review.
+
+name: Upstream Update Check
+
+on:
+  schedule:
+    # Daily at 00:00 UTC
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      create_issue:
+        description: "Create GitHub issue when updates are found"
+        type: boolean
+        default: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  check-updates:
+    name: Check Upstream Updates
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[service,update]"
+
+      - name: Run update checker
+        id: update-check
+        run: |
+          python -m skpl_agent.updates checker --output json --output-file update-report.json
+        continue-on-error: true
+
+      - name: Read update report
+        id: read-report
+        if: always()
+        run: |
+          if [ -f update-report.json ]; then
+            echo "report<<EOF" >> $GITHUB_OUTPUT
+            cat update-report.json >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            # Extract counts
+            HAS_UPDATES=$(python -c "
+import json
+with open('update-report.json') as f:
+    data = json.load(f)
+print(data.get('repos_with_updates', 0))
+            ")
+            echo "has_updates=$HAS_UPDATES" >> $GITHUB_OUTPUT
+          else
+            echo "report=No report generated" >> $GITHUB_OUTPUT
+            echo "has_updates=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create issue for updates
+        if: |
+          always() &&
+          steps.read-report.outputs.has_updates != '0' &&
+          (github.event_name == 'schedule' || github.event.inputs.create_issue == 'true')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let reportData = {};
+            try {
+              reportData = JSON.parse(fs.readFileSync('update-report.json', 'utf8'));
+            } catch (e) {
+              console.log('Could not parse update report');
+              return;
+            }
+
+            const updates = (reportData.results || []).filter(r => r.has_updates);
+            if (updates.length === 0) {
+              console.log('No updates found');
+              return;
+            }
+
+            const bodyLines = [
+              '## Upstream Update Report',
+              '',
+              `**Checked at:** ${reportData.checked_at}`,
+              `**Repos with updates:** ${reportData.repos_with_updates} / ${reportData.total_repos}`,
+              '',
+              '---',
+              '',
+              '### Repositories with Updates',
+              '',
+            ];
+
+            for (const update of updates) {
+              bodyLines.push(`#### ${update.repo_name}`);
+              bodyLines.push(`- **URL:** ${update.repo_url}`);
+              bodyLines.push(`- **Commits behind:** ${update.commits_behind}`);
+              bodyLines.push(`- **Latest tag:** ${update.latest_tag}`);
+              bodyLines.push(`- **Current commit:** ${update.current_commit}`);
+              bodyLines.push(`- **Latest commit:** ${update.latest_commit}`);
+              if (update.breaking_changes && update.breaking_changes.length > 0) {
+                bodyLines.push('- **Breaking changes:**');
+                for (const change of update.breaking_changes) {
+                  bodyLines.push(`  - ${change}`);
+                }
+              }
+              bodyLines.push('');
+            }
+
+            bodyLines.push('---');
+            bodyLines.push('');
+            bodyLines.push('### Action Required');
+            bodyLines.push('');
+            bodyLines.push('1. Review the upstream changes for breaking changes');
+            bodyLines.push('2. Run `python -m skpl_agent.updates merge --repo <name>` to merge');
+            bodyLines.push('3. Run the full test suite to verify compatibility');
+            bodyLines.push('');
+            bodyLines.push('> This issue was automatically created by the upstream update check workflow.');
+
+            const title = `Upstream updates available: ${updates.map(u => u.repo_name).join(', ')}`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: bodyLines.join('\n'),
+              labels: ['upstream-update', 'automated'],
+            });
+
+            console.log(`Created issue: ${title}`);
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Upstream Update Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f update-report.json ]; then
+            python -c "
+import json
+with open('update-report.json') as f:
+    data = json.load(f)
+print(f\"**Checked at:** {data['checked_at']}\")
+print(f\"**Repos scanned:** {data['total_repos']}\")
+print(f\"**Repos with updates:** {data['repos_with_updates']}\")
+print()
+for r in data.get('results', []):
+    status = ':warning: Updates available' if r.get('has_updates') else ':white_check_mark: Up to date'
+    print(f\"- **{r['repo_name']}**: {status}\")
+    if r.get('commits_behind', 0) > 0:
+        print(f\"  - {r['commits_behind']} commits behind, latest tag: {r.get('latest_tag', 'N/A')}\")
+    if r.get('error'):
+        print(f\"  - Error: {r['error']}\")
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo ":x: Update check failed to produce a report" >> $GITHUB_STEP_SUMMARY
+          fi

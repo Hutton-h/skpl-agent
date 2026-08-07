@@ -1,0 +1,127 @@
+# SKPL Agent — Bundle Size Analysis
+#
+# Builds the frontend and analyzes the bundle size to detect regressions.
+# Compares against the last successful build on main and fails if the
+# bundle exceeds the configured budget.
+
+name: Bundle Analyze
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  analyze:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-analyze-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-analyze-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build with stats
+        run: |
+          pnpm build
+        env:
+          CI: true
+          ANALYZE: true
+
+      - name: Analyze bundle size
+        run: |
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Calculate sizes for JS and CSS assets
+          TOTAL_JS=0
+          TOTAL_CSS=0
+          for f in dist/assets/*.js; do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo 0)
+              TOTAL_JS=$((TOTAL_JS + SIZE))
+              SIZE_KB=$((SIZE / 1024))
+              FILENAME=$(basename "$f")
+              echo "- \`$FILENAME\`: ${SIZE_KB}KB" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          for f in dist/assets/*.css; do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo 0)
+              TOTAL_CSS=$((TOTAL_CSS + SIZE))
+              SIZE_KB=$((SIZE / 1024))
+              FILENAME=$(basename "$f")
+              echo "- \`$FILENAME\`: ${SIZE_KB}KB" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          TOTAL_JS_KB=$((TOTAL_JS / 1024))
+          TOTAL_CSS_KB=$((TOTAL_CSS / 1024))
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Size | Budget |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Total JS | ${TOTAL_JS_KB}KB | 500KB |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total CSS | ${TOTAL_CSS_KB}KB | 100KB |" >> $GITHUB_STEP_SUMMARY
+
+          # Check against budget
+          FAILED=false
+          if [ $TOTAL_JS -gt 512000 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo ":x: **JS bundle exceeds 500KB budget!** (${TOTAL_JS_KB}KB)" >> $GITHUB_STEP_SUMMARY
+            FAILED=true
+          fi
+          if [ $TOTAL_CSS -gt 102400 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo ":x: **CSS bundle exceeds 100KB budget!** (${TOTAL_CSS_KB}KB)" >> $GITHUB_STEP_SUMMARY
+            FAILED=true
+          fi
+
+          if [ "$FAILED" = true ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+            echo "- Use dynamic imports (\`React.lazy\`) for large page components" >> $GITHUB_STEP_SUMMARY
+            echo "- Configure \`manualChunks\` in \`vite.config.ts\` to split vendor bundles" >> $GITHUB_STEP_SUMMARY
+            echo "- Remove unused dependencies" >> $GITHUB_STEP_SUMMARY
+            echo "- Use tree-shakable imports (e.g., \`import { debounce } from 'lodash-es'\`)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Upload bundle stats
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats
+          path: |
+            frontend/dist/assets/
+          retention-days: 7

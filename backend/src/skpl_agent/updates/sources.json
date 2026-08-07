@@ -1,0 +1,11 @@
+{
+  "repos": [
+    {"name": "agentscope", "url": "https://github.com/agentscope-ai/agentscope", "branch": "main", "enabled": true},
+    {"name": "openwolf", "url": "https://github.com/nicklausroach/OpenWolf", "branch": "main", "enabled": true},
+    {"name": "agent-s", "url": "https://github.com/simular-ai/Agent-S", "branch": "main", "enabled": true},
+    {"name": "firecrawl", "url": "https://github.com/mendableai/firecrawl", "branch": "main", "enabled": true}
+  ],
+  "check_interval_hours": 6,
+  "auto_merge": false,
+  "notify_on_update": true
+}
