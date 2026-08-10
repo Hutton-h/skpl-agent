@@ -22,7 +22,7 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./deploy/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
@@ -114,8 +114,8 @@ services:
   # ── SKPL Agent 前端 ────────────────────────────────────
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
       network: host
     container_name: skpl-frontend
     restart: unless-stopped

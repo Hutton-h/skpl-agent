@@ -96,6 +96,7 @@ storage-redis = ["redis"]
 storage-sql = [
     "sqlalchemy[asyncio]>=2.0",
     "alembic>=1.13",
+    "asyncpg>=0.29",
 ]
 storage-s3 = ["aioboto3"]
 
@@ -274,7 +275,8 @@ skpl-agent = "skpl_agent.cli:main"
 skpl-desktop-node = "skpl_agent.desktop_node.cli:main"
 
 [project.entry-points."skpl_agent.skills"]
-firecrawl = "skpl_agent.skill._firecrawl:FirecrawlSkill"
+# Skills are loaded from skills/ and skills-library/ directories at runtime.
+# Add entry-points here when creating installable skill packages.
 
 [tool.setuptools]
 packages = { find = { where = ["backend/src"] } }

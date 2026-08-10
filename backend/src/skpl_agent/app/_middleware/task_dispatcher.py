@@ -38,24 +38,24 @@ logger = logging.getLogger(__name__)
 
 COMPLEXITY_SIGNALS = [
     # Multi-step indicators
-    r'and\s+also',
-    r'and\s+then',
-    r'first.*then.*finally',
-    r'step\s+\d',
-    r'多步',
-    r'先.*再.*然后',
+    r'\band\s+also\b',
+    r'\band\s+then\b',
+    r'\bfirst.*then.*finally\b',
+    r'\bstep\s+\d\b',
+    r'\b多步\b',
+    r'\b先.*再.*然后\b',
     # Quantity indicators
-    r'(multiple|several|various|many|all)',
-    r'(多个|若干|各个|所有|全部)',
+    r'\b(multiple|several|various|many|all)\b',
+    r'\b(多个|若干|各个|所有|全部)\b',
     # Task type indicators
-    r'(research\s+and|analyze\s+and|build\s+and|create\s+and|fix\s+and)',
-    r'(研究并|分析并|构建并|创建并|修复并)',
+    r'\b(research\s+and|analyze\s+and|build\s+and|create\s+and|fix\s+and)\b',
+    r'\b(研究并|分析并|构建并|创建并|修复并)\b',
     # Cross-domain indicators
-    r'(frontend.*backend|backend.*frontend|full.?stack|end.?to.?end)',
-    r'(前端.*后端|后端.*前端|全栈|端到端)',
+    r'\b(frontend.*backend|backend.*frontend|full.?stack|end.?to.?end)\b',
+    r'\b(前端.*后端|后端.*前端|全栈|端到端)\b',
     # Explicit delegation
-    r'(use\s+sub.?agent|spawn\s+agent|delegate|parallel)',
-    r'(使用子代理|委托|并行)',
+    r'\b(use\s+sub.?agent|spawn\s+agent|delegate|parallel)\b',
+    r'\b(使用子代理|委托|并行)\b',
 ]
 
 # Minimum message length to consider for decomposition

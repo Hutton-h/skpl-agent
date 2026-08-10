@@ -310,13 +310,17 @@ def require_role(required_role: str):
 
     async def _dependency(
         request: Request,
-        jwt_service: JWTService = Depends(),
     ) -> JWTClaims:
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="Not authenticated")
 
         token = auth_header[7:]
+        # Get JWTService from app.state (not via Depends() which is not registered)
+        jwt_service = getattr(request.app.state, "jwt_service", None)
+        if jwt_service is None:
+            raise HTTPException(status_code=503, detail="JWT service not configured")
+
         try:
             return jwt_service.verify_role(token, required_role)
         except TokenExpiredError:

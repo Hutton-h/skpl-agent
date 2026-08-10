@@ -1,4 +1,5 @@
 """The lifespan of the agent service."""
+import os
 import logging
 import socket
 import uuid
@@ -41,14 +42,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         try:
             auth_service = getattr(app.state, "auth_service", None)
             if auth_service is not None:
-                existing = await auth_service.get_user_by_username("admin")
-                if existing is None:
+                admin_user = os.environ.get("SKPL_ADMIN_USER", "admin")
+                admin_pass = os.environ.get("SKPL_ADMIN_PASS", "")
+                existing = await auth_service.get_user_by_username(admin_user)
+                if existing is None and admin_pass:
                     await auth_service.register(
-                        username="admin",
-                        password="admin123",
+                        username=admin_user,
+                        password=admin_pass,
                         role="admin",
                     )
-                    logger.info("Created admin user (admin/admin123)")
+                    logger.info("Created admin user (%s)", admin_user)
+                elif existing is None:
+                    logger.warning(
+                        "Admin user '%s' not found and SKPL_ADMIN_PASS not set — "
+                        "skipping admin auto-creation", admin_user
+                    )
         except Exception as e:
             logger.warning("Failed to ensure admin user: %s", e)
         await stack.enter_async_context(message_bus)

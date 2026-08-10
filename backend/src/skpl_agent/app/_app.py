@@ -465,5 +465,190 @@ def _setup_desktop_ws(app, settings):
 from ._mem0_utils import init_mem0_for_manager
 
 
+def _create_prod_app() -> FastAPI:
+    """Create a production app using environment variables for PostgreSQL + Redis.
+
+    Reads SKPL_CORE_DATABASE_URL and SKPL_CORE_REDIS_URL from environment.
+    Falls back to SQLite + InMemoryMessageBus if not configured.
+    """
+    from fastapi.middleware.cors import CORSMiddleware
+    from .storage import AsyncSQLAlchemyStorage
+    from ..rag._vdb._milvus_lite import MilvusLiteStore
+    from .rag.knowledge_base_manager._collection_per_kb import CollectionPerKbManager
+    from skpl_agent.config import get_settings
+
+    settings = get_settings()
+
+    # Determine data directory
+    data_dir = os.environ.get("SKPL_DATA_DIR")
+    if not data_dir:
+        data_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+            "data",
+        )
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+    except (PermissionError, OSError):
+        import tempfile
+        data_dir = os.path.join(tempfile.gettempdir(), "skpl-data")
+        try:
+            os.makedirs(data_dir, exist_ok=True)
+        except (PermissionError, OSError):
+            data_dir = tempfile.mkdtemp(prefix="skpl-")
+
+    # Database: use env var if set, otherwise fall back to SQLite
+    database_url = os.environ.get("SKPL_CORE_DATABASE_URL")
+    if not database_url:
+        database_url = f"sqlite+aiosqlite:///{data_dir}/skpl.db"
+        logger = __import__("logging").getLogger(__name__)
+        logger.info("SKPL_CORE_DATABASE_URL not set, using SQLite: %s", database_url)
+    else:
+        logger = __import__("logging").getLogger(__name__)
+        logger.info("Using database: %s", database_url.split("@")[-1] if "@" in database_url else database_url)
+
+    storage = AsyncSQLAlchemyStorage(
+        database_url,
+        create_tables=True,
+    )
+
+    # Message bus: use Redis if URL is set, otherwise fall back to in-memory
+    redis_url = os.environ.get("SKPL_CORE_REDIS_URL")
+    if redis_url:
+        try:
+            from .message_bus import RedisMessageBus
+            message_bus = RedisMessageBus(redis_url)
+            logger = __import__("logging").getLogger(__name__)
+            logger.info("Using Redis message bus: %s", redis_url.split("@")[-1] if "@" in redis_url else redis_url)
+        except ImportError:
+            logger = __import__("logging").getLogger(__name__)
+            logger.warning("Redis client not installed, falling back to InMemoryMessageBus")
+            message_bus = InMemoryMessageBus()
+        except Exception as e:
+            logger = __import__("logging").getLogger(__name__)
+            logger.warning("Failed to connect to Redis (%s), falling back to InMemoryMessageBus", e)
+            message_bus = InMemoryMessageBus()
+    else:
+        message_bus = InMemoryMessageBus()
+
+    # Project root and skills
+    project_root = os.environ.get("SKPL_PROJECT_ROOT") or str(Path(__file__).resolve().parents[4])
+    skills_dir = os.path.join(project_root, "skills")
+    try:
+        skill_paths = [
+            os.path.join(skills_dir, d)
+            for d in os.listdir(skills_dir)
+            if os.path.isdir(os.path.join(skills_dir, d))
+            and os.path.isfile(os.path.join(skills_dir, d, "SKILL.md"))
+        ] if os.path.isdir(skills_dir) else []
+    except (PermissionError, FileNotFoundError, OSError):
+        skill_paths = []
+
+    workspace_manager = LocalWorkspaceManager(
+        basedir=os.path.join(data_dir, "workspaces"),
+        skill_paths=skill_paths,
+    )
+
+    # Knowledge base: local Milvus Lite
+    vector_store = MilvusLiteStore(
+        uri=os.path.join(data_dir, "milvus_lite.db"),
+    )
+    knowledge_base_manager = CollectionPerKbManager(
+        storage=storage,
+        vector_store=vector_store,
+    )
+
+    app = create_app(
+        storage=storage,
+        message_bus=message_bus,
+        workspace_manager=workspace_manager,
+        knowledge_base_manager=knowledge_base_manager,
+        title="SKPL Agent",
+        version=__version__,
+    )
+
+    # CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.core.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Auth
+    _setup_auth(app, settings, storage)
+
+    # Rules + Skill Routing + Mem0 middleware
+    from skpl_agent.app._middleware.rules_middleware import (
+        RulesMiddleware,
+        SkillRoutingMiddleware,
+    )
+    _prev_middleware_factory = None
+
+    _memory_manager = getattr(app.state, "memory_manager", None)
+    if _memory_manager is not None and _memory_manager._mem0 is not None:
+        from skpl_agent.middleware._longterm_memory._mem0._middleware import Mem0Middleware
+
+        async def _mem0_factory(user_id: str, agent_id: str, session_id: str):
+            mm = app.state.memory_manager
+            if mm is None or mm._mem0 is None:
+                return []
+            return [Mem0Middleware(
+                user_id=user_id,
+                client=mm._mem0,
+                agent_id=agent_id,
+                mode="both",
+            )]
+        _prev_middleware_factory = _mem0_factory
+
+    async def _rules_middleware_factory(user_id: str, agent_id: str, session_id: str):
+        middlewares = []
+        middlewares.append(RulesMiddleware(
+            coding=True,
+            security=True,
+            communication=True,
+            tools=True,
+        ))
+        try:
+            ws = await workspace_manager.get_workspace(user_id, agent_id, session_id)
+            skills = await ws.list_skills()
+            if skills:
+                skill_dicts = [
+                    {
+                        "name": s.name,
+                        "description": getattr(s, "description", ""),
+                        "when_to_use": getattr(s, "when_to_use", ""),
+                        "category": getattr(s, "category", ""),
+                    }
+                    for s in skills
+                ]
+                middlewares.append(SkillRoutingMiddleware(skill_dicts))
+        except Exception:
+            pass
+        if _prev_middleware_factory is not None:
+            prev = await _prev_middleware_factory(user_id, agent_id, session_id)
+            middlewares.extend(prev)
+        return middlewares
+
+    app.state.extra_agent_middlewares = _rules_middleware_factory
+    _logger = __import__("logging").getLogger(__name__)
+    _logger.info("Rules + Skill Routing + Mem0 middleware registered for all agents")
+
+    # Desktop Node WebSocket
+    _setup_desktop_ws(app, settings)
+
+    # Voyage AI compatibility
+    from ._mem0_utils import _patch_openai_embeddings_for_voyage
+    _patch_openai_embeddings_for_voyage(__import__("logging").getLogger(__name__))
+
+    return app
+
+
 # Module-level app instance for uvicorn
-app = _create_dev_app()
+# Use production mode if DATABASE_URL or REDIS_URL is set, otherwise dev mode
+_db_url = os.environ.get("SKPL_CORE_DATABASE_URL", "")
+_redis_url = os.environ.get("SKPL_CORE_REDIS_URL", "")
+if _db_url.startswith("postgresql") or _redis_url:
+    app = _create_prod_app()
+else:
+    app = _create_dev_app()

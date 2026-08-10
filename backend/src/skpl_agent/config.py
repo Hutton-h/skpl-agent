@@ -69,8 +69,8 @@ class CoreSettings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="sqlite+aiosqlite:///data/skpl.db",
-        description="Async SQLAlchemy database URL",
+        default="",
+        description="Async SQLAlchemy database URL (defaults to sqlite+aiosqlite:///{data_dir}/skpl.db)",
     )
     database_echo: bool = Field(default=False, description="SQL echo for debugging")
 
@@ -115,8 +115,13 @@ class CoreSettings(BaseSettings):
         return v
 
     @model_validator(mode="after")
-    def _ensure_secret_key(self) -> "CoreSettings":
-        """Auto-generate a random secret key if the default placeholder is used."""
+    def _ensure_defaults(self) -> "CoreSettings":
+        """Auto-generate defaults for missing configuration values."""
+        # Auto-generate database URL if not set
+        if not self.database_url:
+            db_path = (self.data_dir / "skpl.db").as_posix()
+            self.database_url = f"sqlite+aiosqlite:///{db_path}"
+        # Auto-generate a random secret key if the default placeholder is used
         if self.secret_key.get_secret_value() == _DEFAULT_SECRET_PLACEHOLDER:
             self.secret_key = SecretStr(secrets.token_urlsafe(48))
             logger.warning(

@@ -30,6 +30,7 @@ const proxyPaths = [
 	// Routes that were missing from the original config
 	"/skill-library",
 	"/tts",
+	"/tts-model",
 	"/files",
 	"/quota",
 	"/update",

@@ -1,1 +1,2 @@
-storeDir: C:\Users\Alberton\AppData\Local\Temp\pnpm-store2
+packages:
+  - '.'

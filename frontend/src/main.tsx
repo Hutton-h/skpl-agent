@@ -5,7 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 import './index.css';
 import './i18n';
-import App from './App.tsx';
+import App from './App';
 
 // ── PWA: Service Worker DISABLED ───────────────────────────────────────────
 // SW is disabled in all environments until caching issues are resolved.

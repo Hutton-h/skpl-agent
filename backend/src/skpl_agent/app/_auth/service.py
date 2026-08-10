@@ -26,6 +26,18 @@ class AuthService:
         self._jwt = jwt_service
 
     # ------------------------------------------------------------------
+    # Session helper (wraps storage._session for future compatibility)
+    # ------------------------------------------------------------------
+
+    def _session(self):
+        """Get a database session from the storage backend.
+
+        Uses the storage's internal session factory. When StorageBase
+        gains a public session API, this should be updated to use it.
+        """
+        return self._storage._session()
+
+    # ------------------------------------------------------------------
     # Registration
     # ------------------------------------------------------------------
 
@@ -38,7 +50,7 @@ class AuthService:
     ) -> dict:
         from skpl_agent.app._auth.models import UserRow
 
-        async with self._storage._session() as sess:
+        async with self._session() as sess:
             result = await sess.execute(
                 select(UserRow).where(UserRow.username == username)
             )
