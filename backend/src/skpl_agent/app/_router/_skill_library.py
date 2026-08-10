@@ -145,6 +145,8 @@ async def install_library_skill(body: SkillActionRequest, user_id: str = Depends
         await workspace.add_skill(os.path.abspath(target['path']))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except (PermissionError, OSError, FileNotFoundError) as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to install skill: {e}")
     return InstallSkillResponse(ok=True, already=False)
 
 
@@ -152,4 +154,9 @@ async def install_library_skill(body: SkillActionRequest, user_id: str = Depends
 async def uninstall_library_skill(body: SkillActionRequest, user_id: str = Depends(get_current_user_id), storage: StorageBase = Depends(get_storage), workspace_manager: WorkspaceManagerBase = Depends(get_workspace_manager)) -> None:
     """Remove a skill from the session's workspace by its agent-facing name."""
     workspace = await _resolve_workspace(user_id, body.agent_id, body.session_id, storage, workspace_manager)
-    await workspace.remove_skill(body.name)
+    try:
+        await workspace.remove_skill(body.name)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except (PermissionError, OSError, FileNotFoundError) as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to uninstall skill: {e}")

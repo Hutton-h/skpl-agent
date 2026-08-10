@@ -247,21 +247,37 @@ def _create_dev_app() -> FastAPI:
     from ..rag._vdb._milvus_lite import MilvusLiteStore
     from .rag.knowledge_base_manager._collection_per_kb import CollectionPerKbManager
 
-    data_dir = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-        "data",
-    )
-    os.makedirs(data_dir, exist_ok=True)
+    # Use SKPL_DATA_DIR env var if set (Docker/production), otherwise auto-detect
+    data_dir = os.environ.get("SKPL_DATA_DIR")
+    if not data_dir:
+        data_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+            "data",
+        )
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+    except (PermissionError, OSError):
+        # Fallback to a writable location when running as non-root
+        import tempfile
+        data_dir = os.path.join(tempfile.gettempdir(), "skpl-data")
+        try:
+            os.makedirs(data_dir, exist_ok=True)
+        except (PermissionError, OSError):
+            # Last resort: use a temp dir that we know exists
+            data_dir = tempfile.mkdtemp(prefix="skpl-")
 
     # Project root: use SKPL_PROJECT_ROOT env var or auto-detect
     project_root = os.environ.get("SKPL_PROJECT_ROOT") or str(Path(__file__).resolve().parents[4])
     skills_dir = os.path.join(project_root, "skills")
-    skill_paths = [
-        os.path.join(skills_dir, d)
-        for d in os.listdir(skills_dir)
-        if os.path.isdir(os.path.join(skills_dir, d))
-        and os.path.isfile(os.path.join(skills_dir, d, "SKILL.md"))
-    ] if os.path.isdir(skills_dir) else []
+    try:
+        skill_paths = [
+            os.path.join(skills_dir, d)
+            for d in os.listdir(skills_dir)
+            if os.path.isdir(os.path.join(skills_dir, d))
+            and os.path.isfile(os.path.join(skills_dir, d, "SKILL.md"))
+        ] if os.path.isdir(skills_dir) else []
+    except (PermissionError, FileNotFoundError, OSError):
+        skill_paths = []
 
     storage = AsyncSQLAlchemyStorage(
         f"sqlite+aiosqlite:///{data_dir}/skpl.db",

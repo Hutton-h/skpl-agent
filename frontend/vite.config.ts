@@ -8,6 +8,50 @@ import svgr from "vite-plugin-svgr";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Shared proxy bypass — serve index.html for HTML requests, proxy everything else
+const bypass = (req: any) => {
+	if (req.headers.accept?.includes("text/html")) return "/index.html";
+};
+
+// All backend API route prefixes that need proxying
+const BACKEND_TARGET = "http://127.0.0.1:8000";
+
+const proxyPaths = [
+	"/agent",
+	"/chat",
+	"/sessions",
+	"/credential",
+	"/knowledge_bases",
+	"/contexts",
+	"/schedule",
+	"/model",
+	"/workspace",
+	"/api",
+	// Routes that were missing from the original config
+	"/skill-library",
+	"/tts",
+	"/files",
+	"/quota",
+	"/update",
+	"/web-intelligence",
+	"/desktop-automation",
+	"/desktop-node",
+	"/code-generation",
+	"/agent-templates",
+	"/firecrawl",
+	"/template",
+];
+
+// Build proxy config dynamically
+const proxy: Record<string, any> = {};
+for (const p of proxyPaths) {
+	proxy[p] = {
+		target: BACKEND_TARGET,
+		changeOrigin: true,
+		bypass,
+	};
+}
+
 export default defineConfig({
 	plugins: [
 		svgr(),
@@ -16,78 +60,7 @@ export default defineConfig({
 	],
 	server: {
 		host: "127.0.0.1",
-		proxy: {
-			"/agent": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/chat": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/sessions": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/credential": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/knowledge_bases": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/contexts": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/schedule": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/model": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/workspace": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-			"/api": {
-				target: "http://127.0.0.1:8001",
-				changeOrigin: true,
-				bypass: (req) => {
-					if (req.headers.accept?.includes("text/html")) return "/index.html";
-				},
-			},
-		},
+		proxy,
 	},
 	resolve: {
 		alias: {

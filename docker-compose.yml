@@ -73,11 +73,13 @@ services:
       # Database
       SKPL_CORE_DATABASE_URL: "postgresql+asyncpg://skpl:${SKPL_DB_PASSWORD:-skpl_secure_password_2026}@postgres:5432/skpl"
       SKPL_CORE_REDIS_URL: "redis://:${SKPL_REDIS_PASSWORD:-skpl_redis_2026}@redis:6379/0"
-      # Auth
+      # Auth (JWT secret with auto-generated fallback)
       SKPL_AUTH_MODE: jwt
-      SKPL_AUTH_JWT_SECRET: ${SKPL_JWT_SECRET}
+      SKPL_AUTH_JWT_SECRET: ${SKPL_JWT_SECRET:-skpl-jwt-secret-change-in-production}
       SKPL_AUTH_JWT_ALGORITHM: HS256
       SKPL_AUTH_JWT_EXPIRY_HOURS: 168
+      # Data directory
+      SKPL_DATA_DIR: /app/data
       # Mem0
       SKPL_MEM0_ENABLED: "true"
       SKPL_MEM0_LLM_PROVIDER: ${SKPL_MEM0_LLM_PROVIDER:-deepseek}
@@ -101,7 +103,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs')"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -125,7 +127,7 @@ services:
     ports:
       - "127.0.0.1:4173:4173"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:4173"]
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:4173/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3

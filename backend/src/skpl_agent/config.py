@@ -16,7 +16,9 @@ Configuration categories:
 
 from __future__ import annotations
 
+import logging
 import os
+import secrets
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Optional
@@ -29,6 +31,11 @@ from pydantic import (
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
+
+# Default placeholder that should never be used in production
+_DEFAULT_SECRET_PLACEHOLDER = "your_secure_random_secret_here"
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +79,7 @@ class CoreSettings(BaseSettings):
 
     # Secrets
     secret_key: SecretStr = Field(
-        default=SecretStr("your_secure_random_secret_here"),
+        default=SecretStr(_DEFAULT_SECRET_PLACEHOLDER),
         description="Secret key for JWT and session signing",
     )
 
@@ -106,6 +113,17 @@ class CoreSettings(BaseSettings):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
+
+    @model_validator(mode="after")
+    def _ensure_secret_key(self) -> "CoreSettings":
+        """Auto-generate a random secret key if the default placeholder is used."""
+        if self.secret_key.get_secret_value() == _DEFAULT_SECRET_PLACEHOLDER:
+            self.secret_key = SecretStr(secrets.token_urlsafe(48))
+            logger.warning(
+                "WARNING: SKPL_CORE_SECRET_KEY not set — using auto-generated key. "
+                "Set SKPL_CORE_SECRET_KEY in your .env file for production deployments."
+            )
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -401,7 +419,7 @@ class AuthSettings(BaseSettings):
         description="Auth mode: 'none' = X-User-ID header only, 'jwt' = JWT Bearer token (with X-User-ID fallback)",
     )
     jwt_secret: str = Field(
-        default="your_secure_random_secret_here",
+        default=_DEFAULT_SECRET_PLACEHOLDER,
         description="JWT secret key for token signing",
     )
     jwt_algorithm: str = Field(
@@ -412,6 +430,17 @@ class AuthSettings(BaseSettings):
         default=24,
         description="JWT token expiry in hours",
     )
+
+    @model_validator(mode="after")
+    def _ensure_jwt_secret(self) -> "AuthSettings":
+        """Auto-generate a random JWT secret if the default placeholder is used."""
+        if self.jwt_secret == _DEFAULT_SECRET_PLACEHOLDER:
+            self.jwt_secret = secrets.token_urlsafe(48)
+            logger.warning(
+                "WARNING: SKPL_AUTH_JWT_SECRET not set — using auto-generated key. "
+                "Set SKPL_AUTH_JWT_SECRET in your .env file for production deployments."
+            )
+        return self
 
 
 # ---------------------------------------------------------------------------

@@ -26,6 +26,8 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 # Copy project files
 COPY pyproject.toml README.md LICENSE ./
 COPY backend/ backend/
+COPY skills/ skills/
+COPY skills-library/ skills-library/
 
 # Install the package with service dependencies
 RUN pip install --no-cache-dir -e ".[service,storage-sql,context]"
@@ -46,21 +48,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder --chmod=755 /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder --chmod=755 /usr/local/bin /usr/local/bin
 
-# Copy application code
-COPY --from=builder /app/backend /app/backend
-COPY --from=builder /app/pyproject.toml /app/README.md /app/
+# Copy application code with explicit permissions
+COPY --from=builder --chmod=755 /app/backend /app/backend
+COPY --from=builder --chmod=755 /app/skills /app/skills
+COPY --from=builder --chmod=755 /app/skills-library /app/skills-library
+COPY --from=builder --chmod=644 /app/pyproject.toml /app/README.md /app/
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash skpl && \
-    chown -R skpl:skpl /app
+# Create non-root user and all required data directories (as root)
+# All directories that may be mounted as volumes MUST be pre-created here
+# so that the non-root user can write to them
+RUN adduser --disabled-password --gecos "" skpl && \
+    mkdir -p /app/backend/data /app/data /app/blobs /app/logs && \
+    chown -R skpl:skpl /app && \
+    chmod -R 755 /app/backend/data /app/data /app/blobs /app/logs
 
 USER skpl
-
-# Create data directory
-RUN mkdir -p /app/data
 
 # Environment
 ENV PYTHONUNBUFFERED=1 \
