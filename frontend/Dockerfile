@@ -17,12 +17,10 @@ RUN corepack enable && corepack prepare pnpm@11.17.0 --activate
 RUN npm config set registry https://registry.npmmirror.com
 
 # Copy package files first for better layer caching
-# (pnpm-lock.yaml may not exist yet; pnpm install will generate it)
-COPY frontend/package.json frontend/pnpm-workspace.yaml frontend/.npmrc ./
-COPY frontend/pnpm-lock.yaml* ./
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml frontend/.npmrc ./
 
-# Install dependencies with pnpm
-RUN pnpm install --no-frozen-lockfile
+# Install dependencies with pnpm (frozen lockfile for reproducible builds)
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY frontend/ .
@@ -43,7 +41,7 @@ RUN npm config set registry https://registry.npmmirror.com
 
 # Copy package files and install only production deps
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml /app/.npmrc ./
-RUN pnpm install --prod --no-frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile
 
 # Copy built assets
 COPY --from=builder /app/dist ./dist
