@@ -90,6 +90,10 @@ export function BugLogPage() {
   }, [sessionId, statusFilter]);
 
   useEffect(() => {
+    if (!sessionId) {
+      setLoading(false);
+      return;
+    }
     loadBugs();
   }, [loadBugs]);
 
@@ -114,6 +118,16 @@ export function BugLogPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      {!sessionId && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="flex flex-col items-center gap-2 py-8">
+            <Bug className="h-8 w-8 text-amber-500" />
+            <p className="text-sm text-muted-foreground text-center">
+              {t('buglog.noSessionSelected') || 'No active session selected. Please open a chat session first to view bug logs.'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('buglog.title')}</h1>

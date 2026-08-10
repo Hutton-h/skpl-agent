@@ -174,6 +174,10 @@ export function ContextPage() {
   };
 
   useEffect(() => {
+    if (!sessionId) {
+      setAnatomyLoading(false);
+      return;
+    }
     loadAnatomyStats();
   }, [sessionId]);
 
@@ -214,6 +218,16 @@ export function ContextPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      {!sessionId && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="flex flex-col items-center gap-2 py-8">
+            <FolderTree className="h-8 w-8 text-amber-500" />
+            <p className="text-sm text-muted-foreground text-center">
+              {t('context.noSessionSelected') || 'No active session selected. Please open a chat session first to view context.'}
+            </p>
+          </CardContent>
+        </Card>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">

@@ -26,6 +26,11 @@ async def _require_admin(request: Request):
         raise HTTPException(status_code=403, detail="Admin only")
     return claims
 
+
+async def _require_auth(request: Request):
+    """Require authenticated user (any role) — for read-only endpoints."""
+    return await _get_jwt_claims(request)
+
 # Singleton service instance
 _service: UpdateService | None = None
 
@@ -47,14 +52,14 @@ def set_update_service(service: UpdateService) -> None:
 # ── Status ───────────────────────────────────────────────────────────────
 
 @router.get("/status")
-async def get_status(claims = Depends(_require_admin)) -> dict[str, Any]:
+async def get_status(claims = Depends(_require_auth)) -> dict[str, Any]:
     """Get the current update service status."""
     svc = get_update_service()
     return await svc.get_status()
 
 
 @router.get("/health")
-async def health_check(claims = Depends(_require_admin)) -> dict[str, str]:
+async def health_check(claims = Depends(_require_auth)) -> dict[str, str]:
     """Simple health check."""
     return {"status": "ok", "component": "updates"}
 

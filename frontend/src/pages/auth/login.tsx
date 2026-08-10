@@ -55,7 +55,8 @@ export const LoginPage = ({ className }: Props) => {
 			}
 
 			const data = await res.json();
-			setAuth(data.token, data.user.username);
+			setAuth(data.token, data.user.id, data.user.username);
+			localStorage.setItem('user_role', data.user.role);
 			navigate('/dashboard', { replace: true });
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'An unexpected error occurred');

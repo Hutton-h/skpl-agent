@@ -29,21 +29,26 @@ export const getBaseUrl = () => {
   }
   return 'http://localhost:8000';
 };
-export const getUserId = () => localStorage.getItem('username') || 'dev-user';
+export const getUserId = () => localStorage.getItem('user_id') || 'dev-user';
+
+/** Get the stored display username, if any. */
+export const getUsername = (): string | null => localStorage.getItem('username');
 
 /** Get the stored JWT token, if any. */
 export const getToken = (): string | null => localStorage.getItem('auth_token');
 
 /** Store a JWT token and user info after login/register. */
-export const setAuth = (token: string, userId: string) => {
+export const setAuth = (token: string, userId: string, username: string) => {
 	localStorage.setItem('auth_token', token);
-	localStorage.setItem('username', userId);
+	localStorage.setItem('user_id', userId);
+	localStorage.setItem('username', username);
 };
 
 /** Clear auth state (logout). */
 export const clearAuth = () => {
 	localStorage.removeItem('auth_token');
-	// Keep username for backward compatibility with X-User-ID mode
+	localStorage.removeItem('user_id');
+	localStorage.removeItem('user_role');
 };
 
 /** Check if the user is authenticated with a JWT token. */

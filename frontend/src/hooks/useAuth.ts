@@ -1,5 +1,5 @@
 ﻿import { useMemo } from 'react';
-import { getToken, getUserId } from '@/api/client';
+import { getToken, getUserId, getUsername } from '@/api/client';
 
 interface AuthState {
   user: {
@@ -13,7 +13,7 @@ interface AuthState {
 export function useAuth(): AuthState {
   return useMemo(() => {
     const token = getToken();
-    const username = getUserId();
+    const username = getUsername() || getUserId();
     const role = localStorage.getItem('user_role') || 'user';
 
     if (!token) {

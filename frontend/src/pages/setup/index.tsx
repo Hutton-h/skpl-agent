@@ -84,8 +84,9 @@ export const SetupPage = ({ onComplete, className }: Props) => {
 			}
 
 			const data = await res.json();
-			// Store the actual username (not the UUID id)
+			// Store user ID (UUID) for API calls and username for display
 			localStorage.setItem('auth_token', data.token);
+			localStorage.setItem('user_id', data.user.id);
 			localStorage.setItem('username', data.user.username);
 			localStorage.setItem('user_role', data.user.role);
 			onComplete();

@@ -92,9 +92,31 @@ async def get_current_user_id(
             detail="Authentication required. Provide a valid Bearer token.",
         )
 
-    # None mode: original behavior (backward compatible)
+    # None mode: X-User-ID header or user_id query param (backward compatible).
+    # Also try JWT Bearer token if no X-User-ID is provided — this allows
+    # the frontend (which sends JWT tokens) to work in "none" auth mode.
     uid = x_user_id or user_id
     if not uid:
+        # Try JWT Bearer token as fallback
+        jwt_bearer = getattr(request.app.state, "jwt_bearer", None)
+        if jwt_bearer is not None:
+            try:
+                claims = await jwt_bearer(request)
+                logger.debug("JWT authenticated user (none mode): %s", claims.sub)
+                return claims.sub
+            except HTTPException:
+                pass
+        # Try token query parameter (for SSE EventSource)
+        if token is not None and jwt_bearer is not None:
+            try:
+                from ._security.jwt_auth import JWTService
+                jwt_service: JWTService = getattr(request.app.state, "jwt_service", None)
+                if jwt_service is not None:
+                    claims = jwt_service.verify_token(token)
+                    logger.debug("JWT authenticated via query param (none mode): %s", claims.sub)
+                    return claims.sub
+            except Exception:
+                pass
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="X-User-ID header or user_id query parameter is required.",
