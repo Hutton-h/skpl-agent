@@ -21,7 +21,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from skpl_agent.app.storage._sql._tables import _Base
 config = context.config
-url_from_env = os.getenv('AGENTSCOPE_SQL_URL')
+url_from_env = os.getenv('SKPL_CORE_DATABASE_URL') or os.getenv('AGENTSCOPE_SQL_URL')
 if url_from_env and (not config.get_main_option('sqlalchemy.url')):
     config.set_main_option('sqlalchemy.url', url_from_env)
 target_metadata = _Base.metadata

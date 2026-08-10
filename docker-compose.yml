@@ -80,6 +80,7 @@ services:
       SKPL_AUTH_JWT_EXPIRY_HOURS: 168
       # Data directory
       SKPL_DATA_DIR: /app/data
+      SKPL_CORE_DATA_DIR: /app/data
       # Mem0
       SKPL_MEM0_ENABLED: "true"
       SKPL_MEM0_LLM_PROVIDER: ${SKPL_MEM0_LLM_PROVIDER:-deepseek}

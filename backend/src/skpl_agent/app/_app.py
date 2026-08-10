@@ -229,6 +229,11 @@ def create_app(storage: StorageBase, message_bus: MessageBus, workspace_manager:
     except ImportError:
         pass
 
+    # ── Health check endpoint (required for Docker healthcheck) ────────
+    @app.get("/api/health", include_in_schema=False)
+    async def health_check():
+        return {"status": "ok", "version": version}
+
     for middleware in extra_middlewares or []:
         app.add_middleware(middleware.cls, **middleware.kwargs)
     app.add_middleware(GroundingMiddleware)
