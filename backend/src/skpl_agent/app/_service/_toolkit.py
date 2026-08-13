@@ -8,7 +8,7 @@ tools, and caller-supplied extras — into one :class:`Toolkit`.
 from typing import Any, Literal
 from .._manager import BackgroundTaskManager, SchedulerManager
 from ..message_bus import MessageBus
-from .._tool import AgentCreate, AgentInvite, PublishVisual, SendNotification, TeamCreate, TeamDelete, TeamSay
+from .._tool import AgentCreate, AgentInvite, PublishVisual, ScrapeTool, SearchWebTool, SendNotification, TeamCreate, TeamDelete, TeamSay
 from .._types import AgentToolFactory, SubAgentTemplate
 from ..storage import AgentRecord, SessionRecord, StorageBase
 from ..workspace_manager import WorkspaceManagerBase
@@ -122,6 +122,9 @@ async def get_toolkit(*, storage: StorageBase, workspace: WorkspaceBase, workspa
             tools.append(AgentInvite(**team_tool_kwargs, invitable_pool=invitable_pool))
     tools.append(SendNotification(storage=storage, user_id=user_id))
     tools.append(PublishVisual(message_bus=message_bus, session_id=session_record.id))
+    # Web search & scrape tools — always available
+    tools.append(SearchWebTool())
+    tools.append(ScrapeTool())
     if extra_factory is not None:
         tools += await extra_factory(user_id, agent_record.id, session_record.id)
     for mw in middlewares:

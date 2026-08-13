@@ -7,11 +7,13 @@ and rate limiting integrated.
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
 from skpl_agent.tool._base import ToolBase, ParamsBase
 from skpl_agent.tool._response import ToolChunk
+from skpl_agent.message import TextBlock
 from skpl_agent.permission import PermissionContext, PermissionDecision, PermissionBehavior
 from skpl_agent.app._security.ssrf import SSRFProtection, SSRFError
 from skpl_agent.app._service.firecrawl_service import FirecrawlConfig
@@ -137,19 +139,19 @@ class SearchWebTool(ToolBase):
         # ---- Parameter Validation ----
         if not query:
             return ToolChunk(
-                content={"query": query, "error": "Query is required", "results": []},
+                content=[TextBlock(text=json.dumps({"query": query, "error": "Query is required", "results": []}))],
                 is_error=True,
             )
 
         if num_results < 1 or num_results > 100:
             return ToolChunk(
-                content={"query": query, "error": "num_results must be between 1 and 100", "results": []},
+                content=[TextBlock(text=json.dumps({"query": query, "error": "num_results must be between 1 and 100", "results": []}))],
                 is_error=True,
             )
 
         if engine not in ("google", "bing"):
             return ToolChunk(
-                content={"query": query, "error": f"Unsupported engine: {engine}. Use 'google' or 'bing'.", "results": []},
+                content=[TextBlock(text=json.dumps({"query": query, "error": f"Unsupported engine: {engine}. Use 'google' or 'bing'.", "results": []}))],
                 is_error=True,
             )
 
@@ -172,7 +174,7 @@ class SearchWebTool(ToolBase):
                         country=country,
                     )
                     return ToolChunk(
-                        content={
+                        content=[TextBlock(text=json.dumps({
                             "query": result.query,
                             "engine": engine,
                             "results": [
@@ -189,7 +191,7 @@ class SearchWebTool(ToolBase):
                             "error": result.error,
                             "duration_ms": result.duration_ms,
                             "tier": "api",
-                        },
+                        }))],
                     )
                 finally:
                     await client.close()
@@ -228,7 +230,7 @@ class SearchWebTool(ToolBase):
                         logger.debug("SSRF filtered search result: %s", r.url)
 
                 return ToolChunk(
-                    content={
+                    content=[TextBlock(text=json.dumps({
                         "query": results.query,
                         "engine": results.engine,
                         "results": safe_results[:num_results],
@@ -236,7 +238,7 @@ class SearchWebTool(ToolBase):
                         "error": results.error,
                         "duration_ms": results.duration_ms,
                         "tier": "local",
-                    },
+                    }))],
                 )
             finally:
                 await searcher.close()
@@ -249,13 +251,13 @@ class SearchWebTool(ToolBase):
         # ---- Tier 3: Static Mode ----
         logger.error("All tiers failed for search query: '%s'", query)
         return ToolChunk(
-            content={
+            content=[TextBlock(text=json.dumps({
                 "query": query,
                 "engine": engine,
                 "results": [],
                 "total_results": 0,
                 "error": "All search tiers failed. The search could not be completed.",
                 "tier": "static",
-            },
+            }))],
             is_error=True,
         )

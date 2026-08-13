@@ -60,6 +60,7 @@ class Searcher:
 
     # Google SERP URL patterns
     _GOOGLE_SEARCH_URL = "https://www.google.com/search"
+    _BING_SEARCH_URL = "https://www.bing.com/search"
 
     def __init__(
         self,
@@ -92,8 +93,15 @@ class Searcher:
         import time
         start = time.monotonic()
 
+        used_engine = engine
         if engine == "google":
             results = await self._search_google(query, num_results, language, country)
+            if not results:
+                logger.info("Google returned no results, falling back to Bing")
+                results = await self._search_bing(query, num_results, language, country)
+                used_engine = "bing"
+        elif engine == "bing":
+            results = await self._search_bing(query, num_results, language, country)
         else:
             return SearchResponse(
                 query=query,
@@ -105,7 +113,7 @@ class Searcher:
 
         return SearchResponse(
             query=query,
-            engine=engine,
+            engine=used_engine,
             results=results[:num_results],
             total_results=len(results),
             duration_ms=round(elapsed, 2),
@@ -180,6 +188,86 @@ class Searcher:
             snippet_div = div.find("div", class_=re.compile(r"VwiC3b|IsZvec"))
             if snippet_div:
                 snippet = snippet_div.get_text(strip=True)
+
+            if title and url:
+                domain = urlparse(url).netloc
+                results.append(SearchResult(
+                    title=title,
+                    url=url,
+                    snippet=snippet,
+                    position=position,
+                    domain=domain,
+                ))
+                position += 1
+
+        return results
+
+    async def _search_bing(
+        self,
+        query: str,
+        num_results: int,
+        language: str,
+        country: str,
+    ) -> list[SearchResult]:
+        """Search Bing via HTML scraping."""
+        params = {
+            "q": query,
+            "count": min(num_results, 50),
+        }
+        if language:
+            params["setlang"] = language
+        if country:
+            params["cc"] = country
+
+        query_string = "&".join(f"{k}={quote_plus(str(v))}" for k, v in params.items())
+        search_url = f"{self._BING_SEARCH_URL}?{query_string}"
+
+        try:
+            scrape_result = await self._scraper.scrape(search_url)
+
+            if scrape_result.error:
+                logger.warning("Bing search failed: %s", scrape_result.error)
+                return []
+
+            results = self._parse_bing_serp(scrape_result.content_html)
+            return results
+
+        except Exception as e:
+            logger.error("Bing search error: %s", e)
+            return []
+
+    def _parse_bing_serp(self, html: str) -> list[SearchResult]:
+        """Parse Bing search results from HTML."""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html, "lxml")
+        results: list[SearchResult] = []
+        position = 0
+
+        # Bing SERP result selectors
+        result_items = soup.find_all("li", class_=re.compile(r"b_algo"))
+
+        for item in result_items:
+            # Title and link
+            title_elem = item.find("h2")
+            if not title_elem:
+                continue
+            link_elem = title_elem.find("a")
+            if not link_elem:
+                continue
+
+            title = title_elem.get_text(strip=True)
+            url = link_elem.get("href", "")
+
+            # Snippet
+            snippet = ""
+            snippet_div = item.find("p")
+            if snippet_div:
+                snippet = snippet_div.get_text(strip=True)
+            if not snippet:
+                snippet_div = item.find("div", class_=re.compile(r"b_caption"))
+                if snippet_div:
+                    snippet = snippet_div.get_text(strip=True)
 
             if title and url:
                 domain = urlparse(url).netloc

@@ -7,11 +7,13 @@ Scraper with SSRF protection and rate limiting integrated.
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
 from skpl_agent.tool._base import ToolBase, ParamsBase
 from skpl_agent.tool._response import ToolChunk
+from skpl_agent.message import TextBlock
 from skpl_agent.permission import PermissionContext, PermissionDecision, PermissionBehavior
 from skpl_agent.app._security.ssrf import SSRFProtection, SSRFError
 from skpl_agent.app._service.firecrawl_service import FirecrawlConfig
@@ -137,26 +139,26 @@ class ScrapeTool(ToolBase):
         except SSRFError as e:
             logger.warning("SSRF blocked URL: %s — %s", url, e)
             return ToolChunk(
-                content={
+                content=[TextBlock(text=json.dumps({
                     "url": url,
                     "error": f"SSRF protection blocked this URL: {e}",
                     "title": "",
                     "content_markdown": "",
                     "status_code": 0,
-                },
+                }))],
                 is_error=True,
             )
 
         # ---- Parameter Validation ----
         if not url:
             return ToolChunk(
-                content={"url": url, "error": "URL is required"},
+                content=[TextBlock(text=json.dumps({"url": url, "error": "URL is required"}))],
                 is_error=True,
             )
 
         if wait_for < 0 or wait_for > 30000:
             return ToolChunk(
-                content={"url": url, "error": "wait_for must be between 0 and 30000 ms"},
+                content=[TextBlock(text=json.dumps({"url": url, "error": "wait_for must be between 0 and 30000 ms"}))],
                 is_error=True,
             )
 
@@ -178,7 +180,7 @@ class ScrapeTool(ToolBase):
                         wait_for=wait_for,
                     )
                     return ToolChunk(
-                        content={
+                        content=[TextBlock(text=json.dumps({
                             "url": result.url,
                             "title": result.title,
                             "description": result.description,
@@ -192,7 +194,7 @@ class ScrapeTool(ToolBase):
                             "error": result.error,
                             "duration_ms": result.duration_ms,
                             "tier": "api",
-                        },
+                        }))],
                     )
                 finally:
                     await client.close()
@@ -210,7 +212,7 @@ class ScrapeTool(ToolBase):
             try:
                 result = await scraper.scrape(url)
                 return ToolChunk(
-                    content={
+                    content=[TextBlock(text=json.dumps({
                         "url": result.url,
                         "title": result.title,
                         "description": result.description,
@@ -224,7 +226,7 @@ class ScrapeTool(ToolBase):
                         "error": result.error,
                         "duration_ms": result.duration_ms,
                         "tier": "local",
-                    },
+                    }))],
                 )
             finally:
                 await scraper.close()
@@ -237,13 +239,13 @@ class ScrapeTool(ToolBase):
         # ---- Tier 3: Static Mode ----
         logger.error("All tiers failed for URL: %s", url)
         return ToolChunk(
-            content={
+            content=[TextBlock(text=json.dumps({
                 "url": url,
                 "error": "All scraping tiers failed. The URL could not be reached.",
                 "title": "",
                 "content_markdown": "",
                 "status_code": 0,
                 "tier": "static",
-            },
+            }))],
             is_error=True,
         )
