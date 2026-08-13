@@ -58,8 +58,9 @@ export const sessionApi = {
 			}
 			// DEV mode: bypass Vite proxy (http-proxy buffers SSE streams,
 			// causing net::ERR_ABORTED) and connect directly to backend.
+			// Read the backend port from the Vite proxy config or default to 8001.
 			const baseUrl = import.meta.env.DEV
-				? "http://127.0.0.1:8000"
+				? "http://127.0.0.1:8001"
 				: getBaseUrl();
 			return `${baseUrl}/sessions/${encodeURIComponent(sessionId)}/stream?${params}`;
 		};
