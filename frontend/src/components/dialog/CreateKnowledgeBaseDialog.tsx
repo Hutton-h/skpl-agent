@@ -18,6 +18,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea.tsx';
+import { useAuth } from '@/hooks/useAuth';
 import { useKbEmbeddingModels } from '@/hooks/useKbEmbeddingModels';
 import { useKnowledgeBases } from '@/hooks/useKnowledgeBases';
 import { useTranslation } from '@/i18n/useI18n.ts';
@@ -51,6 +52,8 @@ export function CreateKnowledgeBaseDialog({
 	const { t } = useTranslation();
 	const { create } = useKnowledgeBases();
 	const { providers, policy, loading } = useKbEmbeddingModels(credentialRefetchTrigger);
+	const { user } = useAuth();
+	const isAdmin = user?.role === 'admin';
 
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
@@ -224,6 +227,7 @@ export function CreateKnowledgeBaseDialog({
 							disabled={submitting}
 						/>
 					</Field>
+					{isAdmin && (
 					<Field orientation="horizontal">
 						<FieldLabel>
 							<Eye className="size-3.5" />
@@ -242,6 +246,7 @@ export function CreateKnowledgeBaseDialog({
 							</span>
 						</div>
 					</Field>
+				)}
 					{errorKey && <p className="text-destructive text-sm">{t(errorKey)}</p>}
 				</FieldGroup>
 				<DialogFooter>

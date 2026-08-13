@@ -51,6 +51,7 @@ class RedisStorage(StorageBase):
         team_index: str = 'agentscope:user:{user_id}:teams'
         knowledge_base: str = 'agentscope:user:{user_id}:knowledge_base:{knowledge_base_id}'
         knowledge_base_index: str = 'agentscope:user:{user_id}:knowledge_bases'
+        knowledge_base_public_index: str = 'agentscope:knowledge_bases:public'
         knowledge_document: str = 'agentscope:user:{user_id}:knowledge_base:{knowledge_base_id}:document:{document_id}'
         knowledge_document_index: str = 'agentscope:user:{user_id}:knowledge_base:{knowledge_base_id}:documents'
         knowledge_document_global_index: str = 'agentscope:knowledge_documents'
@@ -865,14 +866,23 @@ class RedisStorage(StorageBase):
         index_key = self._key(self.key_config.knowledge_base_index, user_id=user_id)
         await self._set_with_ttl(key, record.model_dump_json())
         await self._client.sadd(index_key, record.id)
+        # Manage public knowledge base index
+        public_index = self.key_config.knowledge_base_public_index
+        if record.is_public:
+            await self._client.sadd(public_index, f'{user_id}:{record.id}')
+        else:
+            await self._client.srem(public_index, f'{user_id}:{record.id}')
         return record
 
     async def get_knowledge_base(self, user_id: str, knowledge_base_id: str) -> KnowledgeBaseRecord | None:
         """Fetch a single knowledge base record by id.
 
+        First checks the caller's own KBs, then falls back to public
+        KBs owned by other users.
+
         Args:
             user_id (`str`):
-                The owner user id.
+                The viewer user id.
             knowledge_base_id (`str`):
                 The knowledge base id.
 
@@ -882,30 +892,53 @@ class RedisStorage(StorageBase):
         """
         key = self._key(self.key_config.knowledge_base, user_id=user_id, knowledge_base_id=knowledge_base_id)
         raw = await self._client.get(key)
-        return KnowledgeBaseRecord.model_validate_json(raw) if raw else None
+        if raw:
+            return KnowledgeBaseRecord.model_validate_json(raw)
+        # Check public KBs from other users
+        public_entries = await self._client.smembers(self.key_config.knowledge_base_public_index)
+        for entry in public_entries:
+            owner_id, kb_id = entry.split(':', 1)
+            if kb_id == knowledge_base_id and owner_id != user_id:
+                pub_key = self._key(self.key_config.knowledge_base, user_id=owner_id, knowledge_base_id=knowledge_base_id)
+                pub_raw = await self._client.get(pub_key)
+                if pub_raw:
+                    return KnowledgeBaseRecord.model_validate_json(pub_raw)
+        return None
 
     async def list_knowledge_bases(self, user_id: str) -> list[KnowledgeBaseRecord]:
-        """List all knowledge base records belonging to the given user.
+        """List all knowledge base records visible to the given user.
 
-        Reads the per-user knowledge base index Set to obtain all ids,
-        then fetches each record individually. Records whose keys have
-        expired or been deleted externally are silently skipped.
+        Includes the user's own KBs plus public KBs from other users.
 
         Args:
             user_id (`str`):
-                The owner user id.
+                The viewer user id.
 
         Returns:
             `list[KnowledgeBaseRecord]`:
-                All knowledge base records for the user.
+                All knowledge base records visible to the user.
         """
+        # Own KBs
         index_key = self._key(self.key_config.knowledge_base_index, user_id=user_id)
         ids = await self._client.smembers(index_key)
         records: list[KnowledgeBaseRecord] = []
+        seen: set[str] = set()
         for kb_id in ids:
             raw = await self._client.get(self._key(self.key_config.knowledge_base, user_id=user_id, knowledge_base_id=kb_id))
             if raw:
                 records.append(KnowledgeBaseRecord.model_validate_json(raw))
+                seen.add(kb_id)
+        # Public KBs from other users
+        public_entries = await self._client.smembers(self.key_config.knowledge_base_public_index)
+        for entry in public_entries:
+            owner_id, kb_id = entry.split(':', 1)
+            if owner_id == user_id or kb_id in seen:
+                continue
+            pub_key = self._key(self.key_config.knowledge_base, user_id=owner_id, knowledge_base_id=kb_id)
+            pub_raw = await self._client.get(pub_key)
+            if pub_raw:
+                records.append(KnowledgeBaseRecord.model_validate_json(pub_raw))
+                seen.add(kb_id)
         return records
 
     async def delete_knowledge_base(self, user_id: str, knowledge_base_id: str) -> bool:
@@ -936,6 +969,8 @@ class RedisStorage(StorageBase):
         index_key = self._key(self.key_config.knowledge_base_index, user_id=user_id)
         deleted = await self._client.delete(key)
         await self._client.srem(index_key, knowledge_base_id)
+        # Clean up public index
+        await self._client.srem(self.key_config.knowledge_base_public_index, f'{user_id}:{knowledge_base_id}')
         return deleted > 0
 
     def _document_key(self, user_id: str, knowledge_base_id: str, document_id: str) -> str:

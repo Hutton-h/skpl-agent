@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input.tsx';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea.tsx';
 import { useKnowledgeBases } from '@/hooks/useKnowledgeBases';
+import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/i18n/useI18n.ts';
 
 interface Props {
@@ -34,6 +35,8 @@ interface Props {
 export function EditKnowledgeBaseDialog({ open, onOpenChange, knowledgeBase, onUpdated }: Props) {
 	const { t } = useTranslation();
 	const { update } = useKnowledgeBases();
+	const { user } = useAuth();
+	const isAdmin = user?.role === 'admin';
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
 	const [isPublic, setIsPublic] = useState(false);
@@ -117,6 +120,7 @@ export function EditKnowledgeBaseDialog({ open, onOpenChange, knowledgeBase, onU
 							{embeddingModelLabel}
 						</Badge>
 					</Field>
+					{isAdmin && (
 					<Field orientation="horizontal">
 						<FieldLabel>
 							<Eye className="size-3.5" />
@@ -135,6 +139,7 @@ export function EditKnowledgeBaseDialog({ open, onOpenChange, knowledgeBase, onU
 							</span>
 						</div>
 					</Field>
+				)}
 					{errorKey && <p className="text-destructive text-sm">{t(errorKey)}</p>}
 				</FieldGroup>
 				<DialogFooter>
