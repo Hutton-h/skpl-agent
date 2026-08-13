@@ -1,0 +1,14 @@
+name: voyage-3-lite
+label: Voyage AI voyage-3-lite
+status: active
+
+input_types:
+  - text/plain
+
+output_types:
+  - application/x-embedding
+
+context_size: 32000
+
+dimensions: 512
+supported_dimensions: [512]

@@ -1,5 +1,5 @@
-name: voyage-2
-label: Voyage AI voyage-2
+name: voyage-law-2
+label: Voyage AI voyage-law-2
 status: active
 
 input_types:
@@ -8,7 +8,7 @@ input_types:
 output_types:
   - application/x-embedding
 
-context_size: 4000
+context_size: 16000
 
 dimensions: 1024
 supported_dimensions: [1024]
