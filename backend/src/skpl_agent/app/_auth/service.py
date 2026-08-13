@@ -58,6 +58,12 @@ class AuthService:
             if existing is not None:
                 raise ValueError(f"Username '{username}' already exists")
 
+            # The first user to register automatically becomes admin
+            if role == "user":
+                count_result = await sess.execute(select(UserRow))
+                if not count_result.first():
+                    role = "admin"
+
             password_hash = bcrypt.hashpw(
                 password.encode("utf-8"), bcrypt.gensalt()
             ).decode("utf-8")
@@ -110,6 +116,13 @@ class AuthService:
                 password.encode("utf-8"), user.password_hash.encode("utf-8")
             ):
                 raise ValueError("Invalid username or password")
+
+            # Auto-upgrade: if this is the only user, ensure they are admin
+            if user.role != "admin":
+                count_result = await sess.execute(select(UserRow))
+                users = count_result.all()
+                if len(users) == 1:
+                    user.role = "admin"
 
             user.last_login_at = datetime.now(timezone.utc)
             await sess.commit()

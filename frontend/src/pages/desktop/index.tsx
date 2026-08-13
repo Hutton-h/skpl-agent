@@ -25,6 +25,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from '@/i18n/useI18n';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -174,13 +175,33 @@ export function DesktopPage() {
                   <Button
                     size="lg"
                     className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
-                    onClick={() => {
-                      const baseUrl = localStorage.getItem('server_url') || 'http://localhost:8000';
-                      let url = baseUrl.trim();
-                      if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
-                      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)\//, '$1:$2/');
-                      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)$/, '$1:$2');
-                      window.open(url + '/api/desktop/download-installer', '_blank');
+                    onClick={async () => {
+                      try {
+                        const baseUrl = localStorage.getItem('server_url') || 'http://localhost:8000';
+                        let url = baseUrl.trim();
+                        if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+                        url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)\//, '$1:$2/');
+                        url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)$/, '$1:$2');
+
+                        // Step 1: Get install token
+                        const tokenRes = await fetch(`${url}/api/desktop/install-token`);
+                        if (!tokenRes.ok) {
+                          throw new Error('获取安装令牌失败');
+                        }
+                        const tokenData = await tokenRes.json();
+
+                        // Step 2: Download using the token-authenticated URL
+                        window.open(tokenData.download_url, '_blank');
+                      } catch (err) {
+                        console.error('Download failed:', err);
+                        // Fallback: try direct download (may work if server allows)
+                        const baseUrl = localStorage.getItem('server_url') || 'http://localhost:8000';
+                        let url = baseUrl.trim();
+                        if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+                        url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)\//, '$1:$2/');
+                        url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)$/, '$1:$2');
+                        window.open(url + '/api/desktop/download-installer', '_blank');
+                      }
                     }}
                   >
                     <Download className="w-4 h-4" />
@@ -190,13 +211,22 @@ export function DesktopPage() {
                     size="lg"
                     variant="outline"
                     className="gap-2"
-                    onClick={() => {
-                      const baseUrl = localStorage.getItem('server_url') || 'http://localhost:8000';
-                      let url = baseUrl.trim();
-                      if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
-                      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)\//, '$1:$2/');
-                      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)$/, '$1:$2');
-                      window.open(url + '/api/desktop/install-token', '_blank');
+                    onClick={async () => {
+                      try {
+                        const baseUrl = localStorage.getItem('server_url') || 'http://localhost:8000';
+                        let url = baseUrl.trim();
+                        if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
+                        url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)\//, '$1:$2/');
+                        url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)$/, '$1:$2');
+
+                        const res = await fetch(`${url}/api/desktop/install-token`);
+                        const data = await res.json();
+                        // Copy token to clipboard
+                        await navigator.clipboard.writeText(data.token);
+                        toast.success('安装令牌已复制到剪贴板');
+                      } catch {
+                        toast.error('获取安装令牌失败');
+                      }
                     }}
                   >
                     <ArrowRight className="w-4 h-4" />

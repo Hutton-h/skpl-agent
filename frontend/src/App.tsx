@@ -19,6 +19,7 @@ const WhatsAppPage = lazy(() =>
   import('@/pages/whatsapp').then((mod) => ({ default: mod.default })),
 );
 import { SchedulePage } from '@/pages/schedule';
+import { SettingsPage } from '@/pages/settings';
 import { SetupPage } from '@/pages/setup';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { MobileGuard } from '@/components/auth/MobileGuard';
@@ -144,6 +145,10 @@ const router = createBrowserRouter([
 					{
 						path: '/knowledge/:kbId',
 						element: <ProtectedRoute><KnowledgePage /></ProtectedRoute>,
+					},
+					{
+						path: '/settings',
+						element: <ProtectedRoute><SettingsPage /></ProtectedRoute>,
 					},
 					{
 						path: '/admin',

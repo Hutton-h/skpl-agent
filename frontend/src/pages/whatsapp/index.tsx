@@ -1,8 +1,10 @@
 /**
  * WhatsApp Configuration Page
- * User-friendly setup guide for WhatsApp Cloud API notifications
+ * 
+ * 使用 credential 系统存储 WhatsApp Cloud API 凭据，
+ * 通过 notification API 测试发送，与对话界面的 SendNotification 工具集成。
  */
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   MessageCircle,
   Check,
@@ -15,6 +17,7 @@ import {
   Key,
   Globe,
   AlertCircle,
+  BadgeCheck,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -22,6 +25,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { credentialApi } from '@/api/credential';
+import { client } from '@/api/client';
+import type { CredentialView } from '@/api/types';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -35,6 +41,46 @@ export default function WhatsAppPage() {
   const [testResult, setTestResult] = useState<{ success?: boolean; message?: string }>({});
   const [isSaving, setIsSaving] = useState(false);
 
+  // Existing credential state
+  const [existingCredential, setExistingCredential] = useState<CredentialView | null>(null);
+  const [isLoadingCred, setIsLoadingCred] = useState(true);
+  const [hasChannel, setHasChannel] = useState(false);
+
+  // Load existing WhatsApp credential on mount
+  const loadExisting = useCallback(async () => {
+    setIsLoadingCred(true);
+    try {
+      const list = await credentialApi.list();
+      const wa = list.credentials.find(
+        (c) => (c.data as Record<string, unknown>)?.type === 'whatsapp_credential'
+      );
+      if (wa) {
+        setExistingCredential(wa);
+        const data = wa.data as Record<string, unknown>;
+        setPhoneNumberId((data.phone_number_id as string) || '');
+        setAccessToken((data.access_token as string) || '');
+        setDefaultRecipient((data.default_recipient as string) || '');
+        setStep(4); // Jump to config step
+      }
+
+      // Check notification channels
+      try {
+        const channelsRes = await client.get<{ whatsapp: boolean; email: boolean }>('/notification/channels');
+        setHasChannel(channelsRes.whatsapp);
+      } catch {
+        // Ignore - channels endpoint may not be available
+      }
+    } catch {
+      // Ignore - may not have credentials yet
+    } finally {
+      setIsLoadingCred(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadExisting();
+  }, [loadExisting]);
+
   const handleSave = async () => {
     if (!phoneNumberId || !accessToken) {
       toast.error('请填写 Phone Number ID 和 Access Token');
@@ -42,66 +88,59 @@ export default function WhatsAppPage() {
     }
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      const baseUrl = localStorage.getItem('server_url') || 'http://localhost:8000';
-      // Normalize base URL
-      let url = baseUrl.trim();
-      if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
-      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)\//, '$1:$2/');
-      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)$/, '$1:$2');
+      const credentialData = {
+        type: 'whatsapp_credential',
+        phone_number_id: phoneNumberId,
+        access_token: accessToken,
+        default_recipient: defaultRecipient,
+        api_version: 'v21.0',
+      };
 
-      const res = await fetch(`${url}/api/notification/whatsapp/config`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          phone_number_id: phoneNumberId,
-          access_token: accessToken,
-          default_recipient: defaultRecipient,
-        }),
-      });
-      if (res.ok) {
-        toast.success('WhatsApp 配置已保存');
+      if (existingCredential) {
+        // Update existing credential
+        await credentialApi.update(existingCredential.id, { data: credentialData });
+        toast.success('WhatsApp 配置已更新');
       } else {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.detail || '保存失败，请检查后端服务');
+        // Create new credential
+        await credentialApi.create({ data: credentialData });
+        toast.success('WhatsApp 配置已保存');
       }
-    } catch {
-      toast.error('保存失败，请检查网络连接');
+
+      // Reload to get updated state
+      await loadExisting();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '保存失败';
+      toast.error(msg);
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleTest = async () => {
+    if (!phoneNumberId || !accessToken) {
+      toast.error('请先填写并保存配置');
+      return;
+    }
+    if (!defaultRecipient) {
+      toast.error('请填写默认接收号码');
+      return;
+    }
     setIsTesting(true);
     setTestResult({});
     try {
-      const token = localStorage.getItem('auth_token');
-      const baseUrl = localStorage.getItem('server_url') || 'http://localhost:8000';
-      let url = baseUrl.trim();
-      if (!/^https?:\/\//i.test(url)) url = 'http://' + url;
-      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)\//, '$1:$2/');
-      url = url.replace(/\/(localhost|127\.0\.0\.1)(\d+)$/, '$1:$2');
-
-      const res = await fetch(`${url}/api/notification/whatsapp/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ recipient: defaultRecipient }),
+      const res = await client.post<{ ok: boolean; detail: string }>('/notification/test', {
+        channel: 'whatsapp',
+        recipient: defaultRecipient,
+        message: 'SKPL Agent 测试通知 - 这是一条来自 AI 助手的测试消息',
       });
-      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setTestResult({ success: true, message: '测试消息发送成功！请检查你的 WhatsApp' });
       } else {
-        setTestResult({ success: false, message: data.detail || '发送失败，请检查配置' });
+        setTestResult({ success: false, message: res.detail || '发送失败，请检查配置' });
       }
-    } catch {
-      setTestResult({ success: false, message: '测试失败，请检查网络连接' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '测试失败，请检查网络连接';
+      setTestResult({ success: false, message: msg });
     } finally {
       setIsTesting(false);
     }
@@ -136,6 +175,14 @@ export default function WhatsAppPage() {
     },
   ];
 
+  if (isLoadingCred) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6 max-w-3xl mx-auto">
       <div className="flex items-center gap-3">
@@ -149,6 +196,22 @@ export default function WhatsAppPage() {
           </p>
         </div>
       </div>
+
+      {/* Status banner */}
+      {existingCredential && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardContent className="py-4 flex items-center gap-3">
+            <BadgeCheck className="w-5 h-5 text-green-600" />
+            <div>
+              <p className="font-medium text-green-800">WhatsApp 已配置</p>
+              <p className="text-sm text-green-600">
+                在对话界面中，AI 可以使用 SendNotification 工具通过 WhatsApp 向你发送消息。
+                你可以在聊天面板的"通知"标签页中管理通知事件和渠道。
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Step Indicator */}
       <div className="flex items-center gap-2">
@@ -317,7 +380,7 @@ export default function WhatsAppPage() {
               <div className="flex gap-2">
                 <Button onClick={handleSave} disabled={isSaving} className="gap-2">
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  保存配置
+                  {existingCredential ? '更新配置' : '保存配置'}
                 </Button>
                 <Button
                   variant="outline"
@@ -351,7 +414,46 @@ export default function WhatsAppPage() {
         </CardContent>
       </Card>
 
-      {/* Quick Info */}
+      {/* How it works with chat */}
+      <Card className="bg-gray-50/50">
+        <CardHeader>
+          <CardTitle className="text-base">与对话界面集成</CardTitle>
+          <CardDescription>
+            WhatsApp 配置完成后，AI 助手可以在对话中通过 SendNotification 工具直接发送 WhatsApp 消息
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-green-600 font-bold mt-0.5">1</span>
+            <div>
+              <p className="font-medium">在对话中请求 AI 发送通知</p>
+              <p className="text-muted-foreground">
+                例如："帮我把这个分析结果发到我的 WhatsApp"
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-green-600 font-bold mt-0.5">2</span>
+            <div>
+              <p className="font-medium">AI 自动调用 SendNotification 工具</p>
+              <p className="text-muted-foreground">
+                AI 助手会使用你配置的 WhatsApp 凭据，通过 WhatsApp Cloud API 发送消息
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-green-600 font-bold mt-0.5">3</span>
+            <div>
+              <p className="font-medium">在聊天面板管理通知</p>
+              <p className="text-muted-foreground">
+                打开聊天面板的"通知"标签页，可以配置哪些事件触发 WhatsApp 通知（任务完成、错误告警等）
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* FAQ */}
       <Card className="bg-gray-50/50">
         <CardHeader>
           <CardTitle className="text-base">常见问题</CardTitle>

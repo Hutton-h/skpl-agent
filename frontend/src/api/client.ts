@@ -82,10 +82,16 @@ interface RequestOptions {
 
 function buildHeaders(hasBody: boolean): Record<string, string> {
 	const headers: Record<string, string> = {};
-	// JWT token takes priority -- no guest/fallback X-User-ID
+	// JWT token takes priority
 	const token = getToken();
 	if (token) {
 		headers['Authorization'] = `Bearer ${token}`;
+	}
+	// Always send X-User-ID as fallback for dual-mode auth compatibility.
+	// The backend uses X-User-ID in "none" auth mode and JWT in "jwt" mode.
+	const userId = getUserId();
+	if (userId) {
+		headers['X-User-ID'] = userId;
 	}
 	if (hasBody) headers['Content-Type'] = 'application/json';
 	return headers;

@@ -156,7 +156,9 @@ async def download_installer(request: Request, token: str = ""):
 
 
 def _build_installer_bat(server_url: str, token: str) -> str:
-    node_py = _NODE_PY_TEMPLATE.format(server_url=server_url, token=token)
+    # Use replace() instead of format() because the template contains
+    # Python dict braces and f-string braces that would break .format().
+    node_py = _NODE_PY_TEMPLATE.replace('{server_url}', server_url).replace('{token}', token)
     node_b64 = _b64.b64encode(node_py.encode("utf-8")).decode("ascii")
 
     return f"""@echo off
