@@ -301,6 +301,10 @@ export function useMessages(
 			if (event.type === EventType.REPLY_START) {
 				audioManager?.stopAllPlayback();
 				const e = event as ReplyStartEvent;
+				// Dedup: skip if this reply is already in the message list
+				// (happens when history already contains an in-progress reply
+				//  or SSE reconnects and replays events).
+				if (msgsRef.current.some((m) => m.id === e.reply_id)) return;
 				const msg = AssistantMsg({ id: e.reply_id, name: e.name, content: [] });
 				msgsRef.current = [...msgsRef.current, msg];
 				currentReplyRef.current = msg;

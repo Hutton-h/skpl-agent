@@ -13,7 +13,6 @@ import React, {
 
 import { Button } from '../ui/button';
 import { Kbd } from '../ui/kbd';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ReplyPhase } from '@/hooks/useMessages';
 import { useTranslation } from '@/i18n/useI18n.ts';
 import { cn } from '@/lib/utils';
@@ -526,60 +525,44 @@ export const TextInput = forwardRef<TextInputRef, TextInputProps>(
 							style={{ height: `${COLLAPSED_HEIGHT_PX}px` }}
 						>
 							{/* Screenshot button */}
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon-lg"
-										onClick={handleScreenshot}
-										disabled={attachDisabled}
-										className="shrink-0 rounded-full"
-									>
-										<Camera className="size-4" />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>
-									{t('textInput.screenshot')}
-								</TooltipContent>
-							</Tooltip>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-lg"
+								onClick={handleScreenshot}
+								disabled={attachDisabled}
+								tooltip={t('textInput.screenshot')}
+								className="shrink-0 rounded-full"
+							>
+								<Camera className="size-4" />
+							</Button>
 
 							{/* Attachment button */}
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon-lg"
-										onClick={() => fileInputRef.current?.click()}
-										disabled={attachDisabled}
-										className="shrink-0 rounded-full"
-									>
-										<Paperclip className="size-4" />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>
-									{attachDisabled && allowedInputTypes?.length === 0
-										? t('textInput.attachNotSupported')
-										: t('textInput.attach')}
-								</TooltipContent>
-							</Tooltip>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-lg"
+								onClick={() => fileInputRef.current?.click()}
+								disabled={attachDisabled}
+								tooltip={attachDisabled && allowedInputTypes?.length === 0
+									? t('textInput.attachNotSupported')
+									: t('textInput.attach')}
+								className="shrink-0 rounded-full"
+							>
+								<Paperclip className="size-4" />
+							</Button>
 
 							{/* Send / Stop button — driven by ``sendButton`` config */}
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button
-										type="button"
-										onClick={sendButton.onClick}
-										disabled={sendButton.disabled}
-										size="icon-lg"
-										className="shrink-0 rounded-full"
-									>
-										<sendButton.icon className="h-4 w-4" />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent>{sendButton.tooltip}</TooltipContent>
-							</Tooltip>
+							<Button
+								type="button"
+								onClick={sendButton.onClick}
+								disabled={sendButton.disabled}
+								size="icon-lg"
+								tooltip={sendButton.tooltip}
+								className="shrink-0 rounded-full"
+							>
+								<sendButton.icon className="h-4 w-4" />
+							</Button>
 
 							{/* Hidden file input */}
 							<input
