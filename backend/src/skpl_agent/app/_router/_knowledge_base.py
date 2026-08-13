@@ -179,12 +179,14 @@ async def list_knowledge_bases(user_id: str=Depends(get_current_user_id), access
     return ListKnowledgeBasesResponse(knowledge_bases=entries, total=len(entries))
 
 @knowledge_base_router.patch('/{knowledge_base_id}', response_model=KnowledgeBaseView, summary='Update mutable fields on a knowledge base')
-async def update_knowledge_base(body: UpdateKnowledgeBaseRequest, knowledge_base_id: str=Path(description='The knowledge base id.'), user_id: str=Depends(get_current_user_id), service: 'KnowledgeBaseService'=Depends(get_knowledge_base_service)) -> KnowledgeBaseView:
+async def update_knowledge_base(body: UpdateKnowledgeBaseRequest, knowledge_base_id: str=Path(description='The knowledge base id.'), user_id: str=Depends(get_current_user_id), claims: 'JWTClaims'=Depends(_get_jwt_claims), service: 'KnowledgeBaseService'=Depends(get_knowledge_base_service)) -> KnowledgeBaseView:
     """Update mutable fields on a knowledge base.
 
-    Only ``name`` and ``description`` can be updated.  The embedding
+    ``name``, ``description`` and ``is_public`` can be updated.  The embedding
     model configuration is pinned at creation time and cannot be
     changed.
+
+    Only admins can toggle ``is_public``.
 
     Args:
         body (`UpdateKnowledgeBaseRequest`):
@@ -193,6 +195,8 @@ async def update_knowledge_base(body: UpdateKnowledgeBaseRequest, knowledge_base
             The knowledge base to update.
         user_id (`str`):
             Injected authenticated user ID.
+        claims (`JWTClaims`):
+            Injected authentication claims.
         service (`KnowledgeBaseService`):
             Injected knowledge base service.
 
@@ -200,7 +204,9 @@ async def update_knowledge_base(body: UpdateKnowledgeBaseRequest, knowledge_base
         `KnowledgeBaseView`:
             The knowledge base record after the update.
     """
-    record = await service.update_knowledge_base(user_id=user_id, knowledge_base_id=knowledge_base_id, name=body.name, description=body.description)
+    if body.is_public is not None and claims.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can change the visibility of knowledge bases")
+    record = await service.update_knowledge_base(user_id=user_id, knowledge_base_id=knowledge_base_id, name=body.name, description=body.description, is_public=body.is_public)
     return KnowledgeBaseView.model_validate({**record.model_dump(), 'editable': True})
 
 @knowledge_base_router.delete('/{knowledge_base_id}', status_code=status.HTTP_204_NO_CONTENT, summary='Delete a knowledge base')

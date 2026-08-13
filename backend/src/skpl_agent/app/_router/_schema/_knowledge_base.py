@@ -27,6 +27,7 @@ class UpdateKnowledgeBaseRequest(BaseModel):
     """
     name: str | None = Field(default=None, description='New display name; omit to leave unchanged.')
     description: str | None = Field(default=None, description='New free-form description; omit to leave unchanged.')
+    is_public: bool | None = Field(default=None, description='Whether this knowledge base is publicly visible to all users. Only admins can set this to True.')
 
 class ListKnowledgeBasesResponse(BaseModel):
     """Response body for listing the caller's knowledge bases."""

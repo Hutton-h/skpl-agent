@@ -275,6 +275,11 @@
 			"nameRequired": "Please give the knowledge base a name.",
 			"embeddingRequired": "Please pick an embedding model.",
 			"dimensionRequired": "Please pick a dimension."
+		},
+		"visibility": {
+			"label": "Visibility",
+			"public": "Public",
+			"private": "Private"
 		}
 	},
 	"dialog-knowledge-base-edit": {
@@ -290,6 +295,11 @@
 		},
 		"embeddingModel": {
 			"label": "Embedding model"
+		},
+		"visibility": {
+			"label": "Visibility",
+			"public": "Public",
+			"private": "Private"
 		},
 		"errors": {
 			"nameRequired": "Please give the knowledge base a name."
@@ -328,6 +338,9 @@
 			"emptyTitle": "No knowledge bases",
 			"emptyDescription": "Create a knowledge base to start indexing documents.",
 			"createButton": "Create knowledge base"
+		},
+		"visibility": {
+			"public": "Public"
 		},
 		"document": {
 			"label": "Documents",

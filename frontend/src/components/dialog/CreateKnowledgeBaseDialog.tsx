@@ -1,4 +1,4 @@
-import { CircleAlert, Info, Loader2, PlusCircle } from 'lucide-react';
+import { Eye, CircleAlert, Info, Loader2, PlusCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { EmbeddingModelCard, EmbeddingModelConfig } from '@/api';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog.tsx';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea.tsx';
 import { useKbEmbeddingModels } from '@/hooks/useKbEmbeddingModels';
 import { useKnowledgeBases } from '@/hooks/useKnowledgeBases';
@@ -53,6 +54,7 @@ export function CreateKnowledgeBaseDialog({
 
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
+	const [isPublic, setIsPublic] = useState(false);
 	const [selected, setSelected] = useState<SelectedEmbedding | null>(null);
 	const [dimension, setDimension] = useState<number | null>(null);
 	const [submitting, setSubmitting] = useState(false);
@@ -62,6 +64,7 @@ export function CreateKnowledgeBaseDialog({
 		if (!open) {
 			setName('');
 			setDescription('');
+			setIsPublic(false);
 			setSelected(null);
 			setDimension(null);
 			setErrorKey(null);
@@ -114,6 +117,7 @@ export function CreateKnowledgeBaseDialog({
 				name: name.trim(),
 				description: description.trim(),
 				embedding_model_config: config,
+				is_public: isPublic,
 			});
 			onCreated?.(knowledgeBaseId);
 			onOpenChange(false);
@@ -219,6 +223,24 @@ export function CreateKnowledgeBaseDialog({
 							onChange={setDimension}
 							disabled={submitting}
 						/>
+					</Field>
+					<Field orientation="horizontal">
+						<FieldLabel>
+							<Eye className="size-3.5" />
+							{t('dialog-knowledge-base-create.visibility.label')}
+						</FieldLabel>
+						<div className="flex items-center gap-x-2">
+							<Switch
+								checked={isPublic}
+								onCheckedChange={setIsPublic}
+								disabled={submitting}
+							/>
+							<span className="text-sm text-muted-foreground">
+								{isPublic
+									? t('dialog-knowledge-base-create.visibility.public')
+									: t('dialog-knowledge-base-create.visibility.private')}
+							</span>
+						</div>
 					</Field>
 					{errorKey && <p className="text-destructive text-sm">{t(errorKey)}</p>}
 				</FieldGroup>

@@ -547,6 +547,15 @@ export interface KnowledgeBaseView {
 	 * shared with read-only permission.
 	 */
 	editable: boolean;
+	/**
+	 * Whether this knowledge base is publicly visible to all users.
+	 * Only admins can toggle this.
+	 */
+	is_public: boolean;
+	/**
+	 * The owner user ID of this knowledge base.
+	 */
+	user_id: string;
 }
 
 export interface ListKnowledgeBasesResponse {
@@ -558,6 +567,8 @@ export interface CreateKnowledgeBaseRequest {
 	name: string;
 	description?: string;
 	embedding_model_config: EmbeddingModelConfig;
+	/** Whether this knowledge base is publicly visible to all users. */
+	is_public?: boolean;
 }
 
 export interface CreateKnowledgeBaseResponse {
@@ -572,6 +583,8 @@ export interface CreateKnowledgeBaseResponse {
 export interface UpdateKnowledgeBaseRequest {
 	name?: string;
 	description?: string;
+	/** Whether this knowledge base is publicly visible to all users. Only admins can toggle this. */
+	is_public?: boolean;
 }
 
 /**

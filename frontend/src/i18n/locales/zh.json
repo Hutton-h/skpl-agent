@@ -275,6 +275,11 @@
 			"nameRequired": "请填写知识库名称。",
 			"embeddingRequired": "请选择 Embedding 模型。",
 			"dimensionRequired": "请选择 Embedding 维度。"
+		},
+		"visibility": {
+			"label": "可见性",
+			"public": "公开",
+			"private": "私有"
 		}
 	},
 	"dialog-knowledge-base-edit": {
@@ -290,6 +295,11 @@
 		},
 		"embeddingModel": {
 			"label": "Embedding 模型"
+		},
+		"visibility": {
+			"label": "可见性",
+			"public": "公开",
+			"private": "私有"
 		},
 		"errors": {
 			"nameRequired": "请填写知识库名称。"
@@ -328,6 +338,9 @@
 			"emptyTitle": "暂无知识库",
 			"emptyDescription": "创建知识库以开始索引文档。",
 			"createButton": "创建知识库"
+		},
+		"visibility": {
+			"public": "公开"
 		},
 		"document": {
 			"label": "文档",

@@ -152,10 +152,10 @@ class KnowledgeBaseManagerBase(ABC):
         """
         return await self._storage.list_knowledge_bases(user_id)
 
-    async def update_knowledge_base(self, user_id: str, knowledge_base_id: str, name: str | None=None, description: str | None=None) -> 'KnowledgeBaseRecord | None':
+    async def update_knowledge_base(self, user_id: str, knowledge_base_id: str, name: str | None=None, description: str | None=None, is_public: bool | None=None) -> 'KnowledgeBaseRecord | None':
         """Update mutable fields on an existing knowledge base record.
 
-        Only ``name`` and ``description`` are mutable.  The embedding
+        Only ``name``, ``description`` and ``is_public`` are mutable.  The embedding
         model configuration and the underlying collection are pinned
         for the lifetime of the record because changing either would
         invalidate every previously inserted vector.
@@ -170,6 +170,8 @@ class KnowledgeBaseManagerBase(ABC):
             description (`str | None`, optional):
                 New description; ``None`` leaves the description
                 unchanged.
+            is_public (`bool | None`, optional):
+                New visibility flag; ``None`` leaves the flag unchanged.
 
         Returns:
             `KnowledgeBaseRecord | None`:
@@ -183,6 +185,8 @@ class KnowledgeBaseManagerBase(ABC):
             record.data.name = name
         if description is not None:
             record.data.description = description
+        if is_public is not None:
+            record.is_public = is_public
         return await self._storage.upsert_knowledge_base(user_id, record)
 
     @abstractmethod

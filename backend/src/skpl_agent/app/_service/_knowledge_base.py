@@ -115,14 +115,14 @@ class KnowledgeBaseService:
         """
         return await self._manager.list_knowledge_bases(user_id)
 
-    async def update_knowledge_base(self, user_id: str, knowledge_base_id: str, name: str | None=None, description: str | None=None) -> 'KnowledgeBaseRecord':
+    async def update_knowledge_base(self, user_id: str, knowledge_base_id: str, name: str | None=None, description: str | None=None, is_public: bool | None=None) -> 'KnowledgeBaseRecord':
         """Update mutable fields on a knowledge base, raising 404 if absent.
 
-        Only ``name`` and ``description`` are mutable.  The embedding
+        ``name``, ``description`` and ``is_public`` are mutable.  The embedding
         model configuration is pinned at creation time.
         """
         owner_id = await self._require_edit(user_id, knowledge_base_id)
-        record = await self._manager.update_knowledge_base(user_id=owner_id, knowledge_base_id=knowledge_base_id, name=name, description=description)
+        record = await self._manager.update_knowledge_base(user_id=owner_id, knowledge_base_id=knowledge_base_id, name=name, description=description, is_public=is_public)
         if record is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Knowledge base {knowledge_base_id!r} not found.')
         return record

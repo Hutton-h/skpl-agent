@@ -1,4 +1,4 @@
-import { CheckCircle, CircleAlert, Loader2 } from 'lucide-react';
+import { CheckCircle, CircleAlert, Eye, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import type { KnowledgeBaseView } from '@/api';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog.tsx';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field.tsx';
 import { Input } from '@/components/ui/input.tsx';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea.tsx';
 import { useKnowledgeBases } from '@/hooks/useKnowledgeBases';
 import { useTranslation } from '@/i18n/useI18n.ts';
@@ -35,6 +36,7 @@ export function EditKnowledgeBaseDialog({ open, onOpenChange, knowledgeBase, onU
 	const { update } = useKnowledgeBases();
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
+	const [isPublic, setIsPublic] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [errorKey, setErrorKey] = useState<string | null>(null);
 
@@ -42,6 +44,7 @@ export function EditKnowledgeBaseDialog({ open, onOpenChange, knowledgeBase, onU
 		if (open && knowledgeBase) {
 			setName(knowledgeBase.name);
 			setDescription(knowledgeBase.description ?? '');
+			setIsPublic(knowledgeBase.is_public ?? false);
 			setErrorKey(null);
 			setSubmitting(false);
 		}
@@ -60,6 +63,7 @@ export function EditKnowledgeBaseDialog({ open, onOpenChange, knowledgeBase, onU
 			const view = await update(knowledgeBase.id, {
 				name: trimmedName,
 				description: description.trim(),
+				is_public: isPublic,
 			});
 			onUpdated?.(view);
 			onOpenChange(false);
@@ -112,6 +116,24 @@ export function EditKnowledgeBaseDialog({ open, onOpenChange, knowledgeBase, onU
 						<Badge variant="secondary" className="font-mono">
 							{embeddingModelLabel}
 						</Badge>
+					</Field>
+					<Field orientation="horizontal">
+						<FieldLabel>
+							<Eye className="size-3.5" />
+							{t('dialog-knowledge-base-edit.visibility.label')}
+						</FieldLabel>
+						<div className="flex items-center gap-x-2">
+							<Switch
+								checked={isPublic}
+								onCheckedChange={setIsPublic}
+								disabled={submitting}
+							/>
+							<span className="text-sm text-muted-foreground">
+								{isPublic
+									? t('dialog-knowledge-base-edit.visibility.public')
+									: t('dialog-knowledge-base-edit.visibility.private')}
+							</span>
+						</div>
 					</Field>
 					{errorKey && <p className="text-destructive text-sm">{t(errorKey)}</p>}
 				</FieldGroup>

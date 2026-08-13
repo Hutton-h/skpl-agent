@@ -71,6 +71,11 @@ function DetailPanel({ knowledgeBase, onTest }: DetailPanelProps) {
 				<div className="flex flex-col gap-y-1 min-w-0">
 					<div className="flex items-center gap-x-2">
 						<h2 className="text-lg font-semibold truncate">{knowledgeBase.name}</h2>
+						{knowledgeBase.is_public && (
+							<Badge variant="outline" className="text-green-600 border-green-300">
+								{t('knowledge.visibility.public')}
+							</Badge>
+						)}
 						{!knowledgeBase.editable && (
 							<Badge variant="secondary" title={t('common.readOnlyTooltip')}>
 								{t('common.readOnly')}
@@ -186,6 +191,14 @@ export const KnowledgePage = () => {
 													}}
 												>
 													<span className="truncate">{kb.name}</span>
+													{kb.is_public && (
+														<Badge
+															variant="outline"
+															className="text-[10px] px-1 py-0 text-green-600 border-green-300"
+														>
+															{t('knowledge.visibility.public')}
+														</Badge>
+													)}
 													{!kb.editable && (
 														<Badge
 															variant="secondary"

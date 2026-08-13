@@ -18,7 +18,7 @@ services:
     environment:
       POSTGRES_DB: skpl
       POSTGRES_USER: skpl
-      POSTGRES_PASSWORD: ${SKPL_DB_PASSWORD:-skpl_secure_password_2026}
+      POSTGRES_PASSWORD: ${SKPL_DB_PASSWORD:?请设置 SKPL_DB_PASSWORD 环境变量}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -43,7 +43,7 @@ services:
       --appendonly yes
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
-      --requirepass ${SKPL_REDIS_PASSWORD:-skpl_redis_2026}
+      --requirepass ${SKPL_REDIS_PASSWORD:?请设置 SKPL_REDIS_PASSWORD 环境变量}
     volumes:
       - redis_data:/data
     ports:
@@ -71,11 +71,11 @@ services:
         condition: service_healthy
     environment:
       # Database
-      SKPL_CORE_DATABASE_URL: "postgresql+asyncpg://skpl:${SKPL_DB_PASSWORD:-skpl_secure_password_2026}@postgres:5432/skpl"
-      SKPL_CORE_REDIS_URL: "redis://:${SKPL_REDIS_PASSWORD:-skpl_redis_2026}@redis:6379/0"
+      SKPL_CORE_DATABASE_URL: "postgresql+asyncpg://skpl:${SKPL_DB_PASSWORD:?}@postgres:5432/skpl"
+      SKPL_CORE_REDIS_URL: "redis://:${SKPL_REDIS_PASSWORD:?}@redis:6379/0"
       # Auth (JWT secret with auto-generated fallback)
       SKPL_AUTH_MODE: jwt
-      SKPL_AUTH_JWT_SECRET: ${SKPL_JWT_SECRET:-skpl-jwt-secret-change-in-production}
+      SKPL_AUTH_JWT_SECRET: ${SKPL_JWT_SECRET:?请设置 SKPL_JWT_SECRET 环境变量}
       SKPL_AUTH_JWT_ALGORITHM: HS256
       SKPL_AUTH_JWT_EXPIRY_HOURS: 168
       # Data directory

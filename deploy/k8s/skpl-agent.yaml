@@ -25,9 +25,9 @@ metadata:
   namespace: skpl-agent
 type: Opaque
 stringData:
-  secret-key: "change-me-in-production"
-  jwt-secret: "change-me-in-production"
-  db-password: "skpl_secret"
+  secret-key: ""  # 部署前请通过 kubectl 或 sealed-secrets 设置
+  jwt-secret: ""  # 部署前请通过 kubectl 或 sealed-secrets 设置
+  db-password: ""  # 部署前请通过 kubectl 或 sealed-secrets 设置
   # LLM API keys — set via kubectl or sealed-secrets in production
   openai-api-key: ""
   anthropic-api-key: ""
