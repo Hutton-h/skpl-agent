@@ -6,7 +6,7 @@
 #   docker run -p 8000:8000 skpl-agent-backend
 
 # ===== Stage 1: Build =====
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ COPY skills-library/ skills-library/
 RUN pip install --no-cache-dir -e ".[service,storage-sql,storage-redis,context,rag,vdb-milvus,memory-mem0,update]" asyncpg
 
 # ===== Stage 2: Runtime =====
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 WORKDIR /app
 
