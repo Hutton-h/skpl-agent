@@ -21,7 +21,7 @@
 #     skpl-agent/desktop-node:latest
 
 # ---- Stage 1: Base Python with Windows dependencies ----
-FROM python:3.12-windowsservercore-ltsc2022
+FROM python:3.14-windowsservercore-ltsc2022
 
 # Set shell to PowerShell for Windows containers
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop';"]
